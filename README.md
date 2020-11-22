@@ -1,4 +1,8 @@
 # Rill
+[![NuGet](https://img.shields.io/nuget/v/Rill.svg?cacheSeconds=3600)](https://www.nuget.org/packages/Rill)
+[![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://choosealicense.com/licenses/mit/)
+[![Build Status](https://dev.azure.com/daniel-wertheim/os/_apis/build/status/danielwertheim.rill-CI?branchName=main)](https://dev.azure.com/daniel-wertheim/os/_build/latest?definitionId=9&branchName=main)
+
 `/rɪl/` - noun: *rill*; plural noun: *rills*; **a small stream.** which in this repo translates to: A `Rill` is a "small" stream of events.
 
 `Rill` is inspired by observables but uses the concept of `Consumable` and `Consumer` and adds more members to the `Consumer`, allowing you to get a more fine grained interaction between them.

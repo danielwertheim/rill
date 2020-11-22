@@ -1,0 +1,25 @@
+name: $(SemVer)
+
+variables:
+  BuildConfiguration: Release
+  BuildRev: $[counter(format('{0:yyyyMMdd}', pipeline.startTime), 1)]
+  SemVer: $[format('{0:yyyy}.{0:MM}.{0:dd}-pre{1}', pipeline.startTime, variables.BuildRev)]
+  CommitId: $(Build.SourceVersion)
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - main
+
+pr:
+  autoCancel: true
+  branches:
+    include:
+    - main
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- template: azure-templates/stage-build.yml
