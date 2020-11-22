@@ -2,11 +2,11 @@ using System;
 
 namespace Rill.Operators
 {
-    internal sealed class OfTypeOp<TResult> : IRillConsumable<TResult>
+    internal sealed class OfTypeOp<TSrc, TResult> : IRillConsumable<TResult>
     {
-        private readonly IRillConsumable<object> _src;
+        private readonly IRillConsumable<TSrc> _src;
 
-        public OfTypeOp(IRillConsumable<object> src)
+        public OfTypeOp(IRillConsumable<TSrc> src)
             => _src = src;
 
         public void Dispose()
@@ -15,14 +15,14 @@ namespace Rill.Operators
         public IDisposable Subscribe(IRillConsumer<TResult> consumer)
             => _src.Subscribe(new OfTypeConsumer(consumer));
 
-        private sealed class OfTypeConsumer : IRillConsumer<object>
+        private sealed class OfTypeConsumer : IRillConsumer<TSrc>
         {
             private readonly IRillConsumer<TResult> _consumer;
 
             public OfTypeConsumer(IRillConsumer<TResult> consumer)
                 => _consumer = consumer;
 
-            public void OnNew(Event<object> ev)
+            public void OnNew(Event<TSrc> ev)
             {
                 if (ev.TryDownCast<TResult>(out var cev) && cev != null)
                     _consumer.OnNew(cev);

@@ -195,7 +195,7 @@ namespace UnitTests.Rills
             var consumer = AsyncInterceptingConsumer<int>.Behaving();
             var sut = NewSut<object>();
             sut
-                .OfType<int>()
+                .OfType<object, int>()
                 .Subscribe(consumer);
 
             await sut.EmitAsync("1");

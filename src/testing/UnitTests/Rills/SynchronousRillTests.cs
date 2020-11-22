@@ -193,7 +193,7 @@ namespace UnitTests.Rills
             var consumer = InterceptingConsumer<int>.Behaving();
             var sut = NewSut<object>();
             sut
-                .OfType<int>()
+                .OfType<object, int>()
                 .Subscribe(consumer);
 
             sut.Emit("1");

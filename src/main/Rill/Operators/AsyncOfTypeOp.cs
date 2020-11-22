@@ -3,11 +3,11 @@ using System.Threading.Tasks;
 
 namespace Rill.Operators
 {
-    internal sealed class AsyncOfTypeOp<TResult> : IAsyncRillConsumable<TResult>
+    internal sealed class AsyncOfTypeOp<TSrc, TResult> : IAsyncRillConsumable<TResult>
     {
-        private readonly IAsyncRillConsumable<object> _src;
+        private readonly IAsyncRillConsumable<TSrc> _src;
 
-        public AsyncOfTypeOp(IAsyncRillConsumable<object> src)
+        public AsyncOfTypeOp(IAsyncRillConsumable<TSrc> src)
             => _src = src;
 
         public void Dispose()
@@ -16,14 +16,14 @@ namespace Rill.Operators
         public IDisposable Subscribe(IAsyncRillConsumer<TResult> consumer)
             => _src.Subscribe(new AsyncOfTypeConsumer(consumer));
 
-        private sealed class AsyncOfTypeConsumer : IAsyncRillConsumer<object>
+        private sealed class AsyncOfTypeConsumer : IAsyncRillConsumer<TSrc>
         {
             private readonly IAsyncRillConsumer<TResult> _consumer;
 
             public AsyncOfTypeConsumer(IAsyncRillConsumer<TResult> consumer)
                 => _consumer = consumer;
 
-            public async ValueTask OnNewAsync(Event<object> ev)
+            public async ValueTask OnNewAsync(Event<TSrc> ev)
             {
                 if (ev.TryDownCast<TResult>(out var cev) && cev != null)
                     await _consumer.OnNewAsync(cev).ConfigureAwait(false);
