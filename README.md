@@ -72,8 +72,85 @@ There are some extensions (`Rill.Extensions`) that you can use to customize your
 ```csharp
 rill
   .Where(ev => ev.Sequenece > EventSequence.Create(10))
-  .OfType<MyEvent>()
-  .Where(evContent => evContent.SomeMember == 42)
+  .OfType<IAppEvent, IOrderEvent>()
+  .Where(evContent => evContent.OrderNumber == "42")
   .Select(ev|evContent => new SomeOtherThing(...))
   .Subscribe(ev => {...})
+```
+
+## Sample
+```csharp
+using System;
+using Rill;
+using Rill.Extensions;
+
+namespace ConsoleSample
+{
+    public interface IAppEvent
+    {
+    }
+
+    public interface ICustomerEvent : IAppEvent
+    {
+        public string CustomerNumber { get; }
+    }
+
+    public interface IOrderEvent : IAppEvent
+    {
+        string OrderNumber { get; }
+    }
+
+    public class CustomerCreated : ICustomerEvent
+    {
+        public string CustomerNumber { get; }
+
+        public CustomerCreated(
+            string customerNumber)
+        {
+            CustomerNumber = customerNumber;
+        }
+    }
+
+    public class OrderInitiated : IOrderEvent
+    {
+        public string OrderNumber { get; }
+
+        public OrderInitiated(
+            string orderNumber)
+        {
+            OrderNumber = orderNumber;
+        }
+    }
+
+    public class OrderConfirmed : IOrderEvent
+    {
+        public string OrderNumber { get; }
+
+        public OrderConfirmed(
+            string orderNumber)
+        {
+            OrderNumber = orderNumber;
+        }
+    }
+
+    public class Program
+    {
+        static void Main(string[] args)
+        {
+            using var rill = RillFactory.Synchronous<IAppEvent>();
+
+            rill
+                .OfType<IAppEvent, IOrderEvent>()
+                .Subscribe(ev =>
+                {
+                    Console.WriteLine(ev.Content.GetType().Name);
+                    Console.WriteLine($"Order number: {ev.Content.OrderNumber}");
+                });
+
+            rill.Emit(new CustomerCreated("Customer#1"));
+            rill.Emit(new OrderInitiated("Order#1"));
+            rill.Emit(new OrderConfirmed("Order#1"));
+        }
+    }
+}
 ```

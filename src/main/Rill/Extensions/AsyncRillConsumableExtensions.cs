@@ -23,8 +23,8 @@ namespace Rill.Extensions
             where T : class
             => consumable.Catch(handler);
 
-        public static IAsyncRillConsumable<TResult> OfType<TResult>(this IAsyncRillConsumable<object> consumable)
-            => new AsyncOfTypeOp<TResult>(consumable);
+        public static IAsyncRillConsumable<TResult> OfType<TSrc, TResult>(this IAsyncRillConsumable<TSrc> consumable)
+            => new AsyncOfTypeOp<TSrc, TResult>(consumable);
 
         public static IAsyncRillConsumable<TResult> Select<TSource, TResult>(this IAsyncRillConsumable<TSource> consumable, Func<TSource, TResult> map)
             where TSource : class where TResult : class

@@ -23,8 +23,8 @@ namespace Rill.Extensions
             where T : class
             => consumable.Catch(handler);
 
-        public static IRillConsumable<TResult> OfType<TResult>(this IRillConsumable<object> consumable)
-            => new OfTypeOp<TResult>(consumable);
+        public static IRillConsumable<TResult> OfType<TSrc, TResult>(this IRillConsumable<TSrc> consumable)
+            => new OfTypeOp<TSrc, TResult>(consumable);
 
         public static IRillConsumable<TResult> Select<TSource, TResult>(this IRillConsumable<TSource> consumable, Func<TSource, TResult> map)
             where TSource : class where TResult : class
