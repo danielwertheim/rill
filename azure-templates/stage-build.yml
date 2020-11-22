@@ -7,9 +7,9 @@ stages:
     cancelTimeoutInMinutes: 2
     steps:
     - task: UseDotNet@2
-      displayName: 'Use .NET Core 5.x.x'
+      displayName: 'Use .NET Core 5.x'
       inputs:
-        version: '5.x.x'
+        version: '5.x'
         packageType: sdk
 
     - task: DotNetCoreCLI@2
