@@ -2,11 +2,12 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Rill.Extensions;
 using Rill.Internals;
 
 namespace Rill.Rills
 {
-    internal abstract class SyncRillBase<T> : IRill<T>
+    internal abstract class SyncRillBase<T> : IRill<T>, IRillConsumable<T>
     {
         private readonly object _sync = new object();
 
@@ -18,7 +19,18 @@ namespace Rill.Rills
         private bool _isCompleted;
         private bool _isDisposed;
 
-        protected IEnumerable<IRillConsumer<T>> Consumers => _subscriptions.Select(kv => kv.Value.Consumer);
+        public IRillConsumable<object> ConsumeAny { get; }
+
+        public IRillConsumable<T> Consume { get; }
+
+        protected IEnumerable<IRillConsumer<T>> Consumers
+            => _subscriptions.Select(kv => kv.Value.Consumer);
+
+        protected SyncRillBase()
+        {
+            ConsumeAny = this.OfEventType<T, object>();
+            Consume = this;
+        }
 
         public void Dispose()
         {
@@ -102,7 +114,7 @@ namespace Rill.Rills
         private void DisposeSubscription(ObSubscription sub)
             => _subscriptions.TryRemove(sub.Id, out _);
 
-        public IDisposable Subscribe(IRillConsumer<T> consumer)
+        IDisposable IRillConsumable<T>.Subscribe(IRillConsumer<T> consumer)
         {
             lock (_sync)
             {

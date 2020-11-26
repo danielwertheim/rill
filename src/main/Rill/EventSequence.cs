@@ -10,7 +10,6 @@ namespace Rill
     {
         private readonly long _value;
 
-        public static readonly EventSequence Any = new EventSequence(-1);
         public static readonly EventSequence None = new EventSequence(0);
         public static readonly EventSequence First = new EventSequence(1);
         public static readonly EventSequence Max = new EventSequence(long.MaxValue);
@@ -36,6 +35,7 @@ namespace Rill
             return new EventSequence(_value + change);
         }
 
+        public bool IsNone() => this == None;
         public bool IsFirst() => this == First;
         public bool IsMax() => this == Max;
 
@@ -65,6 +65,9 @@ namespace Rill
 
         public static bool operator >=(EventSequence left, EventSequence right) =>
             Comparer<EventSequence>.Default.Compare(left, right) >= 0;
+
+        public static long operator %(EventSequence left, long right)
+            => left._value % right;
 
         public int CompareTo(EventSequence? other)
         {

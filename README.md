@@ -8,48 +8,57 @@
 `Rill` is inspired by observables but uses the concept of `Consumable` and `Consumer` and adds more members to the `Consumer`, allowing you to get a more fine grained interaction between them.
 
 ## `IAsyncRill<T>` vs `IRill<T>`
-There are two main tracks of an `Rill`:
-
-- AsynchronousRill: extends `IAsyncRill<T>`
-- SynchronousRill: extends `IRill<T>`
+There are two main tracks of an `Rill`: Asynchronous Rill (`IAsyncRill<T>`) and Synchronous Rill (`IRill<T>`).
 
 You create them via `RillFactory.Asynchronous<T>()` and `RillFactory.Synchronous<T>()`. The former uses consumers that has asynchronous members, while the later uses consumers with synchronous members.
 
-## `Subscribe(IRillConsumer)` & `Subscribe(IAsyncRillConsumer)`
-In order to react on events in a consumable Rill, you have to subscribe one or more consumers. This is done via `consumable.Subscribe(...):IDisposable`.
+## Subscribe
+In order to react on events in a consumable `Rill`, you have to subscribe one or more consumers. This is done via:
 
-## `Subscription.Dispose()` unsubscribes
+```csharp
+//Exposes the Rill as a stream of T.
+consumable.Consume.Subscribe(...)
+```
+
+```csharp
+//ConsumeAny: Exposes the Rill as a stream of anything.
+consumable.ConsumeAny.Subscribe(...)
+```
+
+## Unsubscribe
 The `Subscribe` member returns an `IDisposable`. If you invoke `Dispose` the consumer will be disposed and removed from the consumable's list of subscribed consumers and no further interaction will take place.
 
-## `Emit(T content):Event<T>` & `EmitAsync(T content):ValueTask<Event<T>>`
-When emitting a value, the value will reach each consumer as an `Event<T>`. The Consumable Rill will invoke the following members on each subscribed consumer:
+## Emit
+When emitting an event via `IAsyncRill.EmitAsync(...)` or `IRill.Emit`, the event will reach each consumer as an `Event<T>`.
 
-### `OnNew(Event<T>):void` & `OnNewAsync(Event<T>):ValueTask`
+The Consumable Rill will invoke the following members on each subscribed consumer:
+
+### OnNew
 **Required**. Invoked on the consumer (as long as it is subscribed) each time a new event gets emitted.
 
-### `OnSucceeded(EventId):void` & `OnSucceededAsync(EventId):ValueTask`
+### OnSucceeded
 **Optional**. Invoked when the event has been successfully dispatched (no event has occurred) to ALL consumers.
 
-### `OnFailed(EventId):void` & `OnFailedAsync(EventId):ValueTask`
+### OnFailed
 **Optional**. Invoked if the event causes ANY observer to throw an Exception.
 
-### `OnCompleted():void` & `OnCompletedAsync()`
+### OnCompleted()
 **Optional**. Invoked when the Rill is marked as completed.
 
 ## `Event<T>` is just an envelope
 `Rill` does NOT enforce any constraints on your events. This is entirely up to the application/domain that uses `Rill`. Instead, all events are wrapped and decorated with data useful to represent the event occurrence in `Rill`. The envelope adds e.g: `EventId` and `EventSequence`.
 
 ## Delegating Consumers
-Instead of working with an actual implementation of `IAsyncRillConsumer<T>` or `IRillConsumer<T>` you can use a "delegating consumer". You can use it by subscribing using `Action` and `Func` members via `Subscribe(...)` requires import of the `Rill.Extensions` namespace.
+Instead of working with an actual implementation of `IAsyncRillConsumer<T>` or `IRillConsumer<T>` you can use a "delegating consumer". You can use it by subscribing using `Action` and `Func` members via `Subscribe(...)` which requires import of the `Rill.Extensions` namespace.
 
 ```csharp
-rill.Subscribe(ev => {...});
+rill.Consume.Subscribe(ev => {...});
 ```
 
 There are some optional members:
 
 ```csharp
-rill.Subscribe(
+rill.Consume.Subscribe(
     onNew: ev => {...},
     onSuceeded: id => {...},   //optional
     onFailed: id => {...},     //optional
@@ -59,20 +68,31 @@ rill.Subscribe(
 You can also create them via `ConsumerFactory`, e.g:
 
 ```csharp
-ConsumerFactory.AsynchronousConsumer(
+var consumer = ConsumerFactory.AsynchronousConsumer(
     onNew: ev => {...},
     onSuceeded: id => {...},   //optional
     onFailed: id => {...},     //optional
     onCompleted: () => {...}); //optional
+
+rill.Consume.Subscribe(consumer);
 ```
 
 ## Consumable Operators
 There are some extensions (`Rill.Extensions`) that you can use to customize your stream. E.g. `Map` and `Filter` events.
 
 ```csharp
-rill
-  .Where(ev => ev.Sequenece > EventSequence.Create(10))
+rill.Consume
   .OfType<IAppEvent, IOrderEvent>()
+  .Where(ev => ev.Sequenece > EventSequence.Create(10))
+  .Where(evContent => evContent.OrderNumber == "42")
+  .Select(ev|evContent => new SomeOtherThing(...))
+  .Subscribe(ev => {...})
+```
+
+```csharp
+rill.ConsumeAny
+  .OfType<IOrderEvent>()
+  .Where(ev => ev.Sequenece > EventSequence.Create(10))
   .Where(evContent => evContent.OrderNumber == "42")
   .Select(ev|evContent => new SomeOtherThing(...))
   .Subscribe(ev => {...})
@@ -86,9 +106,51 @@ using Rill.Extensions;
 
 namespace ConsoleSample
 {
-    public interface IAppEvent
+    public class Program
     {
+        static void Main(string[] args)
+        {
+            using var rill = RillFactory.Synchronous<IAppEvent>();
+
+            var orderEvents1 = rill
+                .ConsumeAny
+                .OfEventType<IOrderEvent>();
+
+            var orderEvents2 = rill
+                .Consume
+                .OfEventType<IAppEvent, IOrderEvent>();
+
+            var customerEvents = rill
+                .Consume
+                .OfEventType<IAppEvent, ICustomerEvent>();
+
+            orderEvents1
+                .Where(ev => ev.Sequence % 2 != 0)
+                .Subscribe(ev
+                    => Console.WriteLine($"Odd seq order handler: Order: {ev.Content.OrderNumber}"));
+
+            orderEvents2
+                .Where(ev => ev.Sequence % 2 == 0)
+                .Subscribe(ev
+                    => Console.WriteLine($"Even seq Order handler: Order: {ev.Content.OrderNumber}"));
+
+            customerEvents
+                .Subscribe(ev
+                    => Console.WriteLine($"Customer handler: Customer: {ev.Content.CustomerNumber}"));
+
+            rill.Emit(new CustomerCreated("Customer#1"));
+
+            for (var i = 1; i <= 5; i++)
+            {
+                rill.Emit(new OrderInitiated($"Order#{i}"));
+                rill.Emit(new OrderConfirmed($"Order#{i}"));
+            }
+
+            rill.Emit(new CustomerCreated("Customer#2"));
+        }
     }
+
+    public interface IAppEvent { }
 
     public interface ICustomerEvent : IAppEvent
     {
@@ -104,8 +166,7 @@ namespace ConsoleSample
     {
         public string CustomerNumber { get; }
 
-        public CustomerCreated(
-            string customerNumber)
+        public CustomerCreated(string customerNumber)
         {
             CustomerNumber = customerNumber;
         }
@@ -115,8 +176,7 @@ namespace ConsoleSample
     {
         public string OrderNumber { get; }
 
-        public OrderInitiated(
-            string orderNumber)
+        public OrderInitiated(string orderNumber)
         {
             OrderNumber = orderNumber;
         }
@@ -126,31 +186,11 @@ namespace ConsoleSample
     {
         public string OrderNumber { get; }
 
-        public OrderConfirmed(
-            string orderNumber)
+        public OrderConfirmed(string orderNumber)
         {
             OrderNumber = orderNumber;
         }
     }
-
-    public class Program
-    {
-        static void Main(string[] args)
-        {
-            using var rill = RillFactory.Synchronous<IAppEvent>();
-
-            rill
-                .OfType<IAppEvent, IOrderEvent>()
-                .Subscribe(ev =>
-                {
-                    Console.WriteLine(ev.Content.GetType().Name);
-                    Console.WriteLine($"Order number: {ev.Content.OrderNumber}");
-                });
-
-            rill.Emit(new CustomerCreated("Customer#1"));
-            rill.Emit(new OrderInitiated("Order#1"));
-            rill.Emit(new OrderConfirmed("Order#1"));
-        }
-    }
 }
+
 ```
