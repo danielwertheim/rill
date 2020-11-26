@@ -1,7 +1,19 @@
-﻿namespace Rill
+﻿using System;
+
+namespace Rill
 {
-    public interface IRill<T> : IRillConsumable<T>
+    public interface IRill<T> : IDisposable
     {
+        /// <summary>
+        /// Exposes the Rill as a stream of <typeparamref name="{T}"/>.
+        /// </summary>
+        IRillConsumable<T> Consume { get; }
+
+        /// <summary>
+        /// Exposes the Rill as a stream of anything.
+        /// </summary>
+        IRillConsumable<object> ConsumeAny { get; }
+
         /// <summary>
         /// Emits passed event info to all consumers.
         /// </summary>

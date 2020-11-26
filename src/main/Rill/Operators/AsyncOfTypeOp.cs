@@ -25,7 +25,7 @@ namespace Rill.Operators
 
             public async ValueTask OnNewAsync(Event<TSrc> ev)
             {
-                if (ev.TryDownCast<TResult>(out var cev) && cev != null)
+                if (ev.TryCast<TResult>(out var cev) && cev != null)
                     await _consumer.OnNewAsync(cev).ConfigureAwait(false);
             }
 

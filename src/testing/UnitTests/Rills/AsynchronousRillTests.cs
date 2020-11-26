@@ -32,9 +32,9 @@ namespace UnitTests.Rills
             var unsubscribing = AsyncInterceptingConsumer.Behaving();
             var unsubscribingDelegating = new Interceptions();
             var sut = NewSut<string>();
-            sut.Subscribe(_ => throw new Exception("FAIL"));
-            var sub1 = sut.Subscribe(unsubscribing);
-            var sub2 = sut.Subscribe(
+            sut.Consume.Subscribe(_ => throw new Exception("FAIL"));
+            var sub1 = sut.Consume.Subscribe(unsubscribing);
+            var sub2 = sut.Consume.Subscribe(
                 unsubscribingDelegating.InOnNewAsync,
                 unsubscribingDelegating.InOnAllSucceededAsync,
                 unsubscribingDelegating.InOnAnyFailedAsync,
@@ -60,14 +60,14 @@ namespace UnitTests.Rills
             var misbehaving = AsyncInterceptingConsumer.Misbehaving();
             var misbehavingDelegating = new Interceptions();
             var sut = NewSut<string>();
-            sut.Subscribe(behaving);
-            sut.Subscribe(
+            sut.Consume.Subscribe(behaving);
+            sut.Consume.Subscribe(
                 behavingDelegating.InOnNewAsync,
                 behavingDelegating.InOnAllSucceededAsync,
                 behavingDelegating.InOnAnyFailedAsync,
                 behavingDelegating.InOnCompletedAsync);
-            sut.Subscribe(misbehaving);
-            sut.Subscribe(
+            sut.Consume.Subscribe(misbehaving);
+            sut.Consume.Subscribe(
                 ev =>
                 {
                     misbehavingDelegating.InOnNew(ev);
@@ -94,14 +94,14 @@ namespace UnitTests.Rills
             var misbehaving = AsyncInterceptingConsumer.Misbehaving(ev => ev.Sequence > EventSequence.First);
             var misbehavingDelegating = new Interceptions();
             var sut = NewSut<string>();
-            sut.Subscribe(behaving);
-            sut.Subscribe(
+            sut.Consume.Subscribe(behaving);
+            sut.Consume.Subscribe(
                 behavingDelegating.InOnNewAsync,
                 behavingDelegating.InOnAllSucceededAsync,
                 behavingDelegating.InOnAnyFailedAsync,
                 behavingDelegating.InOnCompletedAsync);
-            sut.Subscribe(misbehaving);
-            sut.Subscribe(
+            sut.Consume.Subscribe(misbehaving);
+            sut.Consume.Subscribe(
                 ev =>
                 {
                     misbehavingDelegating.InOnNew(ev);
@@ -144,9 +144,11 @@ namespace UnitTests.Rills
 
             var sut = NewSut<string>();
             sut
+                .Consume
                 .Catch<string, Exception>(_ => behavingGotCatch = true)
                 .Subscribe(behaving);
             sut
+                .Consume
                 .Catch<string, Exception>(_ => misbehavingGotCatch = true)
                 .Subscribe(misbehaving);
 
@@ -171,9 +173,11 @@ namespace UnitTests.Rills
             var misbehavingGotCatch = false;
             var sut = NewSut<string>();
             sut
+                .Consume
                 .CatchAny(_ => behavingGotCatch = true)
                 .Subscribe(behaving);
             sut
+                .Consume
                 .CatchAny(_ => misbehavingGotCatch = true)
                 .Subscribe(misbehaving);
 
@@ -195,7 +199,8 @@ namespace UnitTests.Rills
             var consumer = AsyncInterceptingConsumer<int>.Behaving();
             var sut = NewSut<object>();
             sut
-                .OfType<object, int>()
+                .Consume
+                .OfEventType<object, int>()
                 .Subscribe(consumer);
 
             await sut.EmitAsync("1");
@@ -210,6 +215,7 @@ namespace UnitTests.Rills
             var consumer = AsyncInterceptingConsumer.Behaving();
             var sut = NewSut<string>();
             sut
+                .Consume
                 .Select(content => $"Mapped:{content}")
                 .Subscribe(consumer);
 
@@ -225,6 +231,7 @@ namespace UnitTests.Rills
             var consumer = AsyncInterceptingConsumer.Behaving();
             var sut = NewSut<string>();
             sut
+                .Consume
                 .Where(ev => ev.Content == "1")
                 .Subscribe(consumer);
 
@@ -240,6 +247,7 @@ namespace UnitTests.Rills
             var consumer = AsyncInterceptingConsumer.Behaving();
             var sut = NewSut<string>();
             sut
+                .Consume
                 .Where(content => content == "1")
                 .Subscribe(consumer);
 

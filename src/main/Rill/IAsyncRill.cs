@@ -1,10 +1,21 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Rill
 {
-    public interface IAsyncRill<T> : IAsyncRillConsumable<T>
+    public interface IAsyncRill<T> : IDisposable
     {
+        /// <summary>
+        /// Exposes the Rill as a stream of <typeparamref name="{T}"/>.
+        /// </summary>
+        IAsyncRillConsumable<T> Consume { get; }
+
+        /// <summary>
+        /// Exposes the Rill as a stream of anything.
+        /// </summary>
+        IAsyncRillConsumable<object> ConsumeAny { get; }
+
         /// <summary>
         /// Emits passed event info to all consumers.
         /// </summary>

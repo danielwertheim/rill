@@ -4,6 +4,50 @@ using Rill.Extensions;
 
 namespace ConsoleSample
 {
+    public class Program
+    {
+        static void Main(string[] args)
+        {
+            using var rill = RillFactory.Synchronous<IAppEvent>();
+
+            var orderEvents1 = rill
+                .ConsumeAny
+                .OfEventType<IOrderEvent>();
+
+            var orderEvents2 = rill
+                .Consume
+                .OfEventType<IAppEvent, IOrderEvent>();
+
+            var customerEvents = rill
+                .Consume
+                .OfEventType<IAppEvent, ICustomerEvent>();
+
+            orderEvents1
+                .Where(ev => ev.Sequence % 2 != 0)
+                .Subscribe(ev
+                    => Console.WriteLine($"Odd seq order handler: Order: {ev.Content.OrderNumber}"));
+
+            orderEvents2
+                .Where(ev => ev.Sequence % 2 == 0)
+                .Subscribe(ev
+                    => Console.WriteLine($"Even seq Order handler: Order: {ev.Content.OrderNumber}"));
+
+            customerEvents
+                .Subscribe(ev
+                    => Console.WriteLine($"Customer handler: Customer: {ev.Content.CustomerNumber}"));
+
+            rill.Emit(new CustomerCreated("Customer#1"));
+
+            for (var i = 1; i <= 5; i++)
+            {
+                rill.Emit(new OrderInitiated($"Order#{i}"));
+                rill.Emit(new OrderConfirmed($"Order#{i}"));
+            }
+
+            rill.Emit(new CustomerCreated("Customer#2"));
+        }
+    }
+
     public interface IAppEvent
     {
     }
@@ -48,26 +92,6 @@ namespace ConsoleSample
             string orderNumber)
         {
             OrderNumber = orderNumber;
-        }
-    }
-
-    public class Program
-    {
-        static void Main(string[] args)
-        {
-            using var rill = RillFactory.Synchronous<IAppEvent>();
-
-            rill
-                .OfType<IAppEvent, IOrderEvent>()
-                .Subscribe(ev =>
-                {
-                    Console.WriteLine(ev.Content.GetType().Name);
-                    Console.WriteLine($"Order number: {ev.Content.OrderNumber}");
-                });
-
-            rill.Emit(new CustomerCreated("Customer#1"));
-            rill.Emit(new OrderInitiated("Order#1"));
-            rill.Emit(new OrderConfirmed("Order#1"));
         }
     }
 }

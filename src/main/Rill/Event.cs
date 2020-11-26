@@ -2,6 +2,12 @@
 
 namespace Rill
 {
+    public static class Event
+    {
+        public static Event<T> Create<T>(EventId id, EventSequence sequence, T content)
+            => new Event<T>(id, sequence, content);
+    }
+
     public sealed class Event<T> : IEquatable<Event<T>>
     {
         public EventId Id { get; }
@@ -18,7 +24,7 @@ namespace Rill
         public Event<TResult> Map<TResult>(Func<T, TResult> map)
             => new Event<TResult>(Id, Sequence, map(Content));
 
-        public bool TryDownCast<TResult>(out Event<TResult>? ev)
+        public bool TryCast<TResult>(out Event<TResult>? ev)
         {
             if (Content is TResult result)
             {

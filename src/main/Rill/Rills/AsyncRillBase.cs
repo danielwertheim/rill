@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Rill.Extensions;
 using Rill.Internals;
 
 namespace Rill.Rills
 {
-    internal abstract class AsyncRillBase<T> : IAsyncRill<T>
+    internal abstract class AsyncRillBase<T> : IAsyncRill<T>, IAsyncRillConsumable<T>
     {
         private const int LockMs = 5000;
 
@@ -22,7 +23,18 @@ namespace Rill.Rills
         private bool _isCompleted;
         private bool _isDisposed;
 
-        protected IEnumerable<IAsyncRillConsumer<T>> Consumers => _subscriptions.Select(kv => kv.Value.Consumer);
+        public IAsyncRillConsumable<object> ConsumeAny { get; }
+
+        public IAsyncRillConsumable<T> Consume { get; }
+
+        protected IEnumerable<IAsyncRillConsumer<T>> Consumers
+            => _subscriptions.Select(kv => kv.Value.Consumer);
+
+        protected AsyncRillBase()
+        {
+            ConsumeAny = this.OfEventType<T, object>();
+            Consume = this;
+        }
 
         public void Dispose()
         {
@@ -126,7 +138,7 @@ namespace Rill.Rills
         private void DisposeSubscription(ObSubscription sub)
             => _subscriptions.TryRemove(sub.Id, out _);
 
-        public IDisposable Subscribe(IAsyncRillConsumer<T> consumer)
+        IDisposable IAsyncRillConsumable<T>.Subscribe(IAsyncRillConsumer<T> consumer)
         {
             _sync.Wait(LockMs);
 

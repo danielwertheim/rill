@@ -24,7 +24,7 @@ namespace Rill.Operators
 
             public void OnNew(Event<TSrc> ev)
             {
-                if (ev.TryDownCast<TResult>(out var cev) && cev != null)
+                if (ev.TryCast<TResult>(out var cev) && cev != null)
                     _consumer.OnNew(cev);
             }
 
