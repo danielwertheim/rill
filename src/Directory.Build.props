@@ -6,6 +6,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <Version>0.0.0</Version>
+    <Description>A Rill is a "small" stream of events. Rill is inspired by observables but uses the concept of Consumables and Consumers and adds more members to the Consumer, allowing you to get a more fine grained interaction between them.</Description>
     <Company>danielwertheim</Company>
     <Authors>danielwertheim</Authors>
     <Copyright>Copyright © danielwertheim</Copyright>
