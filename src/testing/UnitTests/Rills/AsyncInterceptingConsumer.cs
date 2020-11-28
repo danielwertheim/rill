@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Rill;
 
-namespace UnitTests
+namespace UnitTests.Rills
 {
     internal static class AsyncInterceptingConsumerExtensions
     {

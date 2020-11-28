@@ -8,24 +8,31 @@ namespace Rill
     {
         private readonly Guid _value;
 
-        public EventId(Guid value)
-        {
-            _value = value != Guid.Empty
-                ? value
-                : throw new ArgumentException("Empty GUID not allowed.", nameof(value));
-        }
+        private EventId(Guid value) => _value = value;
 
         public static EventId New() => new EventId(Guid.NewGuid());
 
+        public static EventId From(Guid value)
+        {
+            if (value == Guid.Empty)
+                throw new ArgumentException("Empty GUID not allowed.", nameof(value));
+
+            return new EventId(value);
+        }
+
         public static explicit operator Guid(EventId id) => id._value;
 
-        public static explicit operator EventId(Guid value) => new EventId(value);
-
         public static bool operator ==(EventId left, EventId right)
-            => Equals(left, right);
+            => left._value == right._value;
 
         public static bool operator !=(EventId left, EventId right)
-            => !Equals(left, right);
+            => left._value != right._value;
+
+        public static bool operator ==(EventId left, Guid right)
+            => left._value == right;
+
+        public static bool operator !=(EventId left, Guid right)
+            => left._value != right;
 
         public bool Equals(EventId? other)
         {

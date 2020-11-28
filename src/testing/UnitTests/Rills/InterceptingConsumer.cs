@@ -1,7 +1,7 @@
 ﻿using System;
 using Rill;
 
-namespace UnitTests
+namespace UnitTests.Rills
 {
     internal static class InterceptingConsumerExtensions
     {
