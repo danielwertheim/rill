@@ -24,8 +24,9 @@ namespace Rill
         /// </remarks>
         /// <param name="content"></param>
         /// <param name="id"></param>
+        /// <param name="sequence"></param>
         /// <returns>Emitted event.</returns>
-        Event<T> Emit(T content, EventId? id = null);
+        Event<T> Emit(T content, EventId? id = null, Sequence? sequence = null);
 
         /// <summary>
         /// Completes the Rill and signals all active consumers.

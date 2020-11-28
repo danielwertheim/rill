@@ -19,12 +19,33 @@ namespace UnitTests.Rills
         {
             var content = NewStringContent();
             var id = EventId.New();
+            var seq = Sequence.First;
             var sut = NewSut<string>();
 
-            var ev = sut.Emit(content, id);
+            var ev = sut.Emit(content, id, seq);
 
             ev.Id.Should().Be(id);
             ev.Content.Should().Be(content);
+            ev.Sequence.Should().Be(seq);
+        }
+
+        [Fact]
+        public void Requires_event_sequence_to_be_in_order()
+        {
+            var sut = NewSut<string>();
+            var ev1 = sut.Emit("first");
+
+            Action historicSequence = () => sut.Emit("second", sequence: Sequence.First);
+            Action futureSequence = () => sut.Emit("second", sequence: ev1.Sequence.Add(2));
+
+            historicSequence
+                .Should()
+                .Throw<EventOutOfOrderException>()
+                .Where(ex => ex.Actual == Sequence.First && ex.Expected == ev1.Sequence.Increment());
+            futureSequence
+                .Should()
+                .Throw<EventOutOfOrderException>()
+                .Where(ex => ex.Actual == ev1.Sequence.Add(2) && ex.Expected == ev1.Sequence.Increment());;
         }
 
         [Fact]
@@ -92,7 +113,7 @@ namespace UnitTests.Rills
         {
             var behaving = InterceptingConsumer.Behaving();
             var behavingDelegating = new Interceptions();
-            var misbehaving = InterceptingConsumer.Misbehaving(ev => ev.Sequence > EventSequence.First);
+            var misbehaving = InterceptingConsumer.Misbehaving(ev => ev.Sequence > Sequence.First);
             var misbehavingDelegating = new Interceptions();
             var sut = NewSut<string>();
             sut.Consume.Subscribe(behaving);
@@ -106,7 +127,7 @@ namespace UnitTests.Rills
                 ev =>
                 {
                     misbehavingDelegating.InOnNew(ev);
-                    if (ev.Sequence > EventSequence.First)
+                    if (ev.Sequence > Sequence.First)
                         throw new Exception(ev.Content);
                 },
                 misbehavingDelegating.InOnAllSucceeded,
@@ -192,7 +213,7 @@ namespace UnitTests.Rills
         }
 
         [Fact]
-        public void OfType_allows_for_content_type_filtering()
+        public void Supports_content_type_filtering()
         {
             var consumer = InterceptingConsumer<int>.Behaving();
             var sut = NewSut<object>();
@@ -208,7 +229,7 @@ namespace UnitTests.Rills
         }
 
         [Fact]
-        public void Select_allows_for_content_mapping()
+        public void Supports_content_mapping()
         {
             var consumer = InterceptingConsumer.Behaving();
             var sut = NewSut<string>();
@@ -224,7 +245,7 @@ namespace UnitTests.Rills
         }
 
         [Fact]
-        public void Where_allows_for_event_filtering()
+        public void Supports_event_filtering()
         {
             var consumer = InterceptingConsumer.Behaving();
             var sut = NewSut<string>();
@@ -240,7 +261,7 @@ namespace UnitTests.Rills
         }
 
         [Fact]
-        public void Where_allows_for_content_filtering()
+        public void Supports_content_filtering()
         {
             var consumer = InterceptingConsumer.Behaving();
             var sut = NewSut<string>();

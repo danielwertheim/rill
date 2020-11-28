@@ -11,7 +11,7 @@ namespace Rill.Rills
     {
         private readonly object _sync = new object();
 
-        private EventSequence _sequence = EventSequence.None;
+        private Sequence _sequence = Sequence.None;
 
         private readonly ConcurrentDictionary<int, ObSubscription> _subscriptions
             = new ConcurrentDictionary<int, ObSubscription>();
@@ -93,16 +93,21 @@ namespace Rill.Rills
 
         protected abstract Event<T> OnEmit(Event<T> ev);
 
-        public Event<T> Emit(T content, EventId? id = null)
+        public Event<T> Emit(T content, EventId? id = null, Sequence? sequence = null)
         {
             lock (_sync)
             {
                 ThrowIfDisposed();
                 ThrowIfCompleted();
 
-                _sequence = _sequence.Increment();
+                var nextSequence = _sequence.Increment();
 
-                var ev = Event.Create(content, id, _sequence);
+                if(sequence != null && sequence != nextSequence)
+                    throw Exceptions.EventOutOrOrder(nextSequence, sequence);
+
+                _sequence = nextSequence;
+
+                var ev = Event.Create(content, id, nextSequence);
 
                 return OnEmit(ev);
             }

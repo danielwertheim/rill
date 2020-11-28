@@ -4,21 +4,20 @@ namespace Rill
 {
     public static class Event
     {
-        public static Event<T> Create<T>(T content, EventId? id = null, EventSequence? sequence = null, Timestamp? timestamp = null)
+        public static Event<T> Create<T>(T content, EventId? id = null, Sequence? sequence = null, Timestamp? timestamp = null)
             => Event<T>.Create(content, id, sequence, timestamp);
     }
 
     public sealed class Event<T> : IEquatable<Event<T>>
     {
         public EventId Id { get; }
-
         public Timestamp Timestamp { get; }
-        public EventSequence Sequence { get; } //TODO: Should probably be removed and owned by the rills and perhaps named RillSequence. OnNew(ev, rillSequence)
+        public Sequence Sequence { get; }
         public T Content { get; }
 
         private Event(
             EventId id,
-            EventSequence sequence,
+            Sequence sequence,
             Timestamp timestamp,
             T content)
         {
@@ -28,10 +27,10 @@ namespace Rill
             Content = content;
         }
 
-        public static Event<T> Create(T content, EventId? id = null, EventSequence? sequence = null, Timestamp? timestamp = null)
+        public static Event<T> Create(T content, EventId? id = null, Sequence? sequence = null, Timestamp? timestamp = null)
             => new Event<T>(
                 id ?? EventId.New(),
-                sequence ?? EventSequence.First, //TODO: Eeek
+                sequence ?? Sequence.First,
                 timestamp ?? Timestamp.New(),
                 content);
 

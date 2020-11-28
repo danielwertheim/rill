@@ -26,9 +26,10 @@ namespace Rill
         /// </remarks>
         /// <param name="content"></param>
         /// <param name="id"></param>
+        /// <param name="sequence"></param>
         /// <param name="cancellationToken"></param>
         /// <returns>Emitted event.</returns>
-        ValueTask<Event<T>> EmitAsync(T content, EventId? id = null, CancellationToken cancellationToken = default);
+        ValueTask<Event<T>> EmitAsync(T content, EventId? id = null, Sequence? sequence = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Completes the Rill and signals all active consumers.

@@ -18,12 +18,34 @@ namespace UnitTests.Rills
         {
             var content = NewStringContent();
             var id = EventId.New();
+            var seq = Sequence.First;
             var sut = NewSut<string>();
 
             var ev = await sut.EmitAsync(content, id);
 
             ev.Id.Should().Be(id);
             ev.Content.Should().Be(content);
+            ev.Sequence.Should().Be(seq);
+        }
+
+        [Fact]
+        public async Task Requires_event_sequence_to_be_in_order()
+        {
+            var sut = NewSut<string>();
+            var ev1 = await sut.EmitAsync("first");
+
+            Func<Task<Event<string>>> historicSequence = async () => await sut.EmitAsync("second", sequence: Sequence.First);
+            Func<Task<Event<string>>> futureSequence = async () => await sut.EmitAsync("second", sequence: ev1.Sequence.Add(2));
+
+            (await historicSequence
+                .Should()
+                .ThrowAsync<EventOutOfOrderException>())
+                .Where(ex => ex.Actual == Sequence.First && ex.Expected == ev1.Sequence.Increment());
+            
+            (await futureSequence
+                .Should()
+                .ThrowAsync<EventOutOfOrderException>())
+                .Where(ex => ex.Actual == ev1.Sequence.Add(2) && ex.Expected == ev1.Sequence.Increment());;
         }
 
         [Fact]
@@ -91,7 +113,7 @@ namespace UnitTests.Rills
         {
             var behaving = AsyncInterceptingConsumer.Behaving();
             var behavingDelegating = new Interceptions();
-            var misbehaving = AsyncInterceptingConsumer.Misbehaving(ev => ev.Sequence > EventSequence.First);
+            var misbehaving = AsyncInterceptingConsumer.Misbehaving(ev => ev.Sequence > Sequence.First);
             var misbehavingDelegating = new Interceptions();
             var sut = NewSut<string>();
             sut.Consume.Subscribe(behaving);
@@ -105,7 +127,7 @@ namespace UnitTests.Rills
                 ev =>
                 {
                     misbehavingDelegating.InOnNew(ev);
-                    if (ev.Sequence > EventSequence.First)
+                    if (ev.Sequence > Sequence.First)
                         throw new Exception(ev.Content);
 
                     return ValueTask.CompletedTask;
@@ -194,7 +216,7 @@ namespace UnitTests.Rills
         }
 
         [Fact]
-        public async Task OfType_allows_for_content_type_filtering()
+        public async Task Supports_content_type_filtering()
         {
             var consumer = AsyncInterceptingConsumer<int>.Behaving();
             var sut = NewSut<object>();
@@ -210,7 +232,7 @@ namespace UnitTests.Rills
         }
 
         [Fact]
-        public async Task Select_allows_for_content_mapping()
+        public async Task Supports_content_mapping()
         {
             var consumer = AsyncInterceptingConsumer.Behaving();
             var sut = NewSut<string>();
@@ -226,7 +248,7 @@ namespace UnitTests.Rills
         }
 
         [Fact]
-        public async Task Where_allows_for_event_filtering()
+        public async Task Supports_event_filtering()
         {
             var consumer = AsyncInterceptingConsumer.Behaving();
             var sut = NewSut<string>();
@@ -242,7 +264,7 @@ namespace UnitTests.Rills
         }
 
         [Fact]
-        public async Task Where_allows_for_content_filtering()
+        public async Task Supports_content_filtering()
         {
             var consumer = AsyncInterceptingConsumer.Behaving();
             var sut = NewSut<string>();
