@@ -16,7 +16,7 @@ namespace Rill
 
         private EventSequence(long value) => _value = value;
 
-        private static EventSequence Create(long eventSequence)
+        public static EventSequence From(long eventSequence)
         {
             if (eventSequence < 0)
                 throw new ArgumentOutOfRangeException(nameof(eventSequence), eventSequence, "Sequence can not be lower than 0.");
@@ -24,16 +24,16 @@ namespace Rill
             return new EventSequence(eventSequence);
         }
 
-        public EventSequence Increment()
-            => new EventSequence(_value + 1);
-
         public EventSequence Add(long change)
         {
             if (change <= 0)
                 throw new ArgumentOutOfRangeException(nameof(change), change, "Change can not be lower than 1.");
 
-            return new EventSequence(_value + change);
+            return From(_value + change);
         }
+
+        public EventSequence Increment()
+            => Add(1);
 
         public bool IsNone() => this == None;
         public bool IsFirst() => this == First;
@@ -45,14 +45,17 @@ namespace Rill
         public static explicit operator long(EventSequence id)
             => id._value;
 
-        public static explicit operator EventSequence(long value)
-            => Create(value);
-
         public static bool operator ==(EventSequence left, EventSequence right)
-            => Equals(left, right);
+            => left._value == right._value;
 
         public static bool operator !=(EventSequence left, EventSequence right)
-            => !Equals(left, right);
+            => left._value != right._value;
+
+        public static bool operator ==(EventSequence left, long right)
+            => left._value == right;
+
+        public static bool operator !=(EventSequence left, long right)
+            => left._value != right;
 
         public static bool operator <(EventSequence left, EventSequence right) =>
             Comparer<EventSequence>.Default.Compare(left, right) < 0;
