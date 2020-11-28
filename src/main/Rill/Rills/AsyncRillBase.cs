@@ -15,7 +15,7 @@ namespace Rill.Rills
 
         private readonly SemaphoreSlim _sync = new SemaphoreSlim(1, 1);
 
-        private EventSequence _sequence = EventSequence.None;
+        private Sequence _sequence = Sequence.None;
 
         private readonly ConcurrentDictionary<int, ObSubscription> _subscriptions
             = new ConcurrentDictionary<int, ObSubscription>();
@@ -100,7 +100,8 @@ namespace Rill.Rills
                 foreach (var kv in _subscriptions)
                 {
                     var sub = kv.Value;
-                    Swallow.Everything(() => sub.Consumer.OnCompletedAsync());
+                    Swallow.Everything(async () =>
+                        await sub.Consumer.OnCompletedAsync().ConfigureAwait(false));
                 }
             }
             finally
@@ -111,7 +112,7 @@ namespace Rill.Rills
 
         protected abstract ValueTask<Event<T>> OnEmitAsync(Event<T> ev);
 
-        public async ValueTask<Event<T>> EmitAsync(T content, EventId? id = null, CancellationToken cancellationToken = default)
+        public async ValueTask<Event<T>> EmitAsync(T content, EventId? id = null, Sequence? sequence = null, CancellationToken cancellationToken = default)
         {
             await _sync.WaitAsync(LockMs, cancellationToken).ConfigureAwait(false);
 
@@ -120,12 +121,14 @@ namespace Rill.Rills
                 ThrowIfDisposed();
                 ThrowIfCompleted();
 
-                _sequence = _sequence.Increment();
+                var nextSequence = _sequence.Increment();
 
-                var ev = new Event<T>(
-                    id ?? EventId.New(),
-                    _sequence,
-                    content);
+                if (sequence != null && sequence != nextSequence)
+                    throw Exceptions.EventOutOrOrder(nextSequence, sequence);
+
+                _sequence = nextSequence;
+
+                var ev = Event.Create(content, id, nextSequence);
 
                 return await OnEmitAsync(ev).ConfigureAwait(false);
             }
