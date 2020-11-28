@@ -17,33 +17,33 @@ In order to react on events in a consumable `Rill`, you have to subscribe one or
 
 ```csharp
 //Exposes the Rill as a stream of T.
-consumable.Consume.Subscribe(...)
+rill.Consume.Subscribe(...)
 ```
 
 ```csharp
 //ConsumeAny: Exposes the Rill as a stream of anything.
-consumable.ConsumeAny.Subscribe(...)
+rill.ConsumeAny.Subscribe(...)
 ```
 
 ## Unsubscribe
 The `Subscribe` member returns an `IDisposable`. If you invoke `Dispose` the consumer will be disposed and removed from the consumable's list of subscribed consumers and no further interaction will take place.
 
 ## Emit
-When emitting an event via `IAsyncRill.EmitAsync(...)` or `IRill.Emit`, the event will reach each consumer as an `Event<T>`.
+When emitting an event via `IAsyncRill<T>.EmitAsync(...)` or `IRill<T>.Emit(...)`, the event will reach each consumer as an `Event<T>`.
 
 The Consumable Rill will invoke the following members on each subscribed consumer:
 
-### OnNew
-**Required**. Invoked on the consumer (as long as it is subscribed) each time a new event gets emitted.
+`IAsyncRill<T>`:
+- `OnNewAsync(Event<T>)`: **Required** Invoked each time a new event gets emitted.
+- `OnAllSucceededAsync(EventId)`: **Optional** Invoked when the event has been successfully dispatched (no event has occurred) to ALL consumers.
+- `OnAnyFailedAsync(EventId)`: **Optional** Invoked if the event causes ANY observer to throw an Exception.
+- `OnCompletedAsync()`: **Optional** Invoked when the Rill is marked as completed.
 
-### OnSucceeded
-**Optional**. Invoked when the event has been successfully dispatched (no event has occurred) to ALL consumers.
-
-### OnFailed
-**Optional**. Invoked if the event causes ANY observer to throw an Exception.
-
-### OnCompleted()
-**Optional**. Invoked when the Rill is marked as completed.
+`IRill<T>`:
+- `OnNew(Event<T>)`: **Required** Invoked each time a new event gets emitted.
+- `OnAllSucceeded(EventId)`: **Optional** Invoked when the event has been successfully dispatched (no event has occurred) to ALL consumers.
+- `OnAnyFailed(EventId)`: **Optional** Invoked if the event causes ANY observer to throw an Exception.
+- `OnCompleted()`: **Optional** Invoked when the Rill is marked as completed.
 
 ## `Event<T>` is just an envelope
 `Rill` does NOT enforce any constraints on your events. This is entirely up to the application/domain that uses `Rill`. Instead, all events are wrapped and decorated with data useful to represent the event occurrence in `Rill`. The envelope adds e.g: `EventId` and `EventSequence`.
@@ -82,7 +82,7 @@ There are some extensions (`Rill.Extensions`) that you can use to customize your
 
 ```csharp
 rill.Consume
-  .OfType<IAppEvent, IOrderEvent>()
+  .OfEventType<IAppEvent, IOrderEvent>()
   .Where(ev => ev.Sequenece > EventSequence.Create(10))
   .Where(evContent => evContent.OrderNumber == "42")
   .Select(ev|evContent => new SomeOtherThing(...))
@@ -91,7 +91,7 @@ rill.Consume
 
 ```csharp
 rill.ConsumeAny
-  .OfType<IOrderEvent>()
+  .OfEventType<IOrderEvent>()
   .Where(ev => ev.Sequenece > EventSequence.Create(10))
   .Where(evContent => evContent.OrderNumber == "42")
   .Select(ev|evContent => new SomeOtherThing(...))
