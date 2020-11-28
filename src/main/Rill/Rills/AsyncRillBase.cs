@@ -100,7 +100,8 @@ namespace Rill.Rills
                 foreach (var kv in _subscriptions)
                 {
                     var sub = kv.Value;
-                    Swallow.Everything(() => sub.Consumer.OnCompletedAsync());
+                    Swallow.Everything(async () =>
+                        await sub.Consumer.OnCompletedAsync().ConfigureAwait(false));
                 }
             }
             finally
