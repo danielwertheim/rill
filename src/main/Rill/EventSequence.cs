@@ -57,6 +57,9 @@ namespace Rill
         public static bool operator !=(EventSequence left, long right)
             => left._value != right;
 
+        public static long operator %(EventSequence left, long right)
+            => left._value % right;
+
         public static bool operator <(EventSequence left, EventSequence right) =>
             Comparer<EventSequence>.Default.Compare(left, right) < 0;
 
@@ -68,9 +71,6 @@ namespace Rill
 
         public static bool operator >=(EventSequence left, EventSequence right) =>
             Comparer<EventSequence>.Default.Compare(left, right) >= 0;
-
-        public static long operator %(EventSequence left, long right)
-            => left._value % right;
 
         public int CompareTo(EventSequence? other)
         {
