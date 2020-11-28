@@ -123,10 +123,7 @@ namespace Rill.Rills
 
                 _sequence = _sequence.Increment();
 
-                var ev = new Event<T>(
-                    id ?? EventId.New(),
-                    _sequence,
-                    content);
+                var ev = Event.Create(content, id, _sequence);
 
                 return await OnEmitAsync(ev).ConfigureAwait(false);
             }
