@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Rill;
 
-namespace UnitTests
+namespace UnitTests.Rills
 {
     internal static class InterceptionsExtensions
     {
