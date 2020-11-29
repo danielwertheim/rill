@@ -47,6 +47,9 @@ namespace Rill
         public override int GetHashCode()
             => _value.GetHashCode();
 
+        public override string ToString()
+            => _value.ToString();
+
         public string ToString(string? format, IFormatProvider? formatProvider)
             => _value.ToString(format, formatProvider);
     }
