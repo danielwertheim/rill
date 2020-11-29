@@ -48,7 +48,7 @@ namespace Rill
             => _value.GetHashCode();
 
         public override string ToString()
-            => _value.ToString();
+            => _value.ToString("N");
 
         public string ToString(string? format, IFormatProvider? formatProvider)
             => _value.ToString(format, formatProvider);
