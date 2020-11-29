@@ -15,7 +15,7 @@ namespace Rill
         public static EventId From(Guid value)
         {
             if (value == Guid.Empty)
-                throw new ArgumentException("Empty GUID not allowed.", nameof(value));
+                throw new ArgumentException("Empty GUID is not allowed.", nameof(value));
 
             return new EventId(value);
         }
