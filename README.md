@@ -110,6 +110,10 @@ namespace ConsoleSample
     {
         static void Main(string[] args)
         {
+            //A Rill reference acts as an unique-identifier for the Rill
+            //by exposing a Name and an Id.
+            var rillReference = RillReference.New("app-events");
+
             using var rill = RillFactory.Synchronous<IAppEvent>();
 
             var orderEvents1 = rill
