@@ -23,6 +23,8 @@ namespace Rill.Rills
         private bool _isCompleted;
         private bool _isDisposed;
 
+        public Sequence Sequence => _sequence;
+
         public IAsyncRillConsumable<object> ConsumeAny { get; }
 
         public IAsyncRillConsumable<T> Consume { get; }

@@ -19,6 +19,8 @@ namespace Rill.Rills
         private bool _isCompleted;
         private bool _isDisposed;
 
+        public Sequence Sequence => _sequence;
+
         public IRillConsumable<object> ConsumeAny { get; }
 
         public IRillConsumable<T> Consume { get; }

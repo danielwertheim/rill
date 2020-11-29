@@ -65,5 +65,18 @@ namespace UnitTests
             (nonNullable != null).Should().BeTrue();
             (nullable == null).Should().BeTrue();
         }
+
+        [Fact]
+        public void Is_immutable()
+        {
+            var initial = Sequence.None;
+
+            var seq1 = initial.Increment();
+            var seq2 = initial.Add(1);
+
+            initial.Should().NotBe(seq1);
+            initial.Should().NotBe(seq2);
+            seq1.Should().Be(seq2);
+        }
     }
 }

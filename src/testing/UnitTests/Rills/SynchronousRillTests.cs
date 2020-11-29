@@ -27,6 +27,7 @@ namespace UnitTests.Rills
             ev.Id.Should().Be(id);
             ev.Content.Should().Be(content);
             ev.Sequence.Should().Be(seq);
+            sut.Sequence.Should().Be(seq);
         }
 
         [Fact]
