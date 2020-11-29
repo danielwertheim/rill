@@ -5,6 +5,16 @@ namespace Rill
     public interface IRill<T> : IDisposable
     {
         /// <summary>
+        /// Gets the Rill reference which identifies a Rill.
+        /// </summary>
+        RillReference Reference { get; }
+
+        /// <summary>
+        /// Gets the current sequence.
+        /// </summary>
+        Sequence Sequence { get; }
+
+        /// <summary>
         /// Exposes the Rill as a stream of <typeparamref name="{T}"/>.
         /// </summary>
         IRillConsumable<T> Consume { get; }

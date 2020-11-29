@@ -6,6 +6,10 @@ namespace Rill.Rills
 {
     internal sealed class SynchronousRill<T> : SyncRillBase<T>
     {
+        public SynchronousRill(RillReference reference) : base(reference)
+        {
+        }
+
         protected override Event<T> OnEmit(Event<T> ev)
         {
             var exceptions = new List<Exception>();

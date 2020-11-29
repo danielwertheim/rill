@@ -8,9 +8,9 @@ namespace Rill.Extensions
     {
         public static IDisposable Subscribe<T>(
             this IAsyncRillConsumable<T> consumable,
-            Func<Event<T>, ValueTask> onNew,
-            Func<EventId, ValueTask>? onAllSucceeded = null,
-            Func<EventId, Exception, ValueTask>? onAnyFailed = null,
+            AsyncNewEventHandler<T> onNew,
+            AsyncSuccessfulEventHandler? onAllSucceeded = null,
+            AsyncFailedEventHandler? onAnyFailed = null,
             Func<ValueTask>? onCompleted = null)
             => consumable.Subscribe(ConsumerFactory.AsynchronousConsumer(onNew, onAllSucceeded, onAnyFailed, onCompleted));
 

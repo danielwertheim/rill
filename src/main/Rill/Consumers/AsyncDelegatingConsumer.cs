@@ -5,15 +5,15 @@ namespace Rill.Consumers
 {
     internal class AsyncDelegatingConsumer<T> : IAsyncRillConsumer<T>
     {
-        private readonly Func<Event<T>, ValueTask> _onNew;
-        private readonly Func<EventId, ValueTask>? _onAllSucceeded;
-        private readonly Func<EventId, Exception, ValueTask>? _onAnyFailed;
+        private readonly AsyncNewEventHandler<T> _onNew;
+        private readonly AsyncSuccessfulEventHandler? _onAllSucceeded;
+        private readonly AsyncFailedEventHandler? _onAnyFailed;
         private readonly Func<ValueTask>? _onCompleted;
 
         internal AsyncDelegatingConsumer(
-            Func<Event<T>, ValueTask> onNew,
-            Func<EventId, ValueTask>? onAllSucceeded = null,
-            Func<EventId, Exception, ValueTask>? onAnyFailed = null,
+            AsyncNewEventHandler<T> onNew,
+            AsyncSuccessfulEventHandler? onAllSucceeded = null,
+            AsyncFailedEventHandler? onAnyFailed = null,
             Func<ValueTask>? onCompleted = null)
         {
             _onNew = onNew;

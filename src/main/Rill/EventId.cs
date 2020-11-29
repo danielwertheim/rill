@@ -15,7 +15,7 @@ namespace Rill
         public static EventId From(Guid value)
         {
             if (value == Guid.Empty)
-                throw new ArgumentException("Empty GUID not allowed.", nameof(value));
+                throw new ArgumentException("Empty GUID is not allowed.", nameof(value));
 
             return new EventId(value);
         }
@@ -46,6 +46,9 @@ namespace Rill
 
         public override int GetHashCode()
             => _value.GetHashCode();
+
+        public override string ToString()
+            => _value.ToString("N");
 
         public string ToString(string? format, IFormatProvider? formatProvider)
             => _value.ToString(format, formatProvider);

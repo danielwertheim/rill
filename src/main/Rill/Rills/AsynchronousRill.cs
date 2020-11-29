@@ -7,6 +7,10 @@ namespace Rill.Rills
 {
     internal sealed class AsynchronousRill<T> : AsyncRillBase<T>
     {
+        public AsynchronousRill(RillReference reference) : base(reference)
+        {
+        }
+
         protected override async ValueTask<Event<T>> OnEmitAsync(Event<T> ev)
         {
             var exceptions = new List<Exception>();

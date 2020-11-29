@@ -9,7 +9,7 @@ namespace UnitTests.Rills
     public class SynchronousRillTests
     {
         private static IRill<T> NewSut<T>()
-            => RillFactory.Synchronous<T>();
+            => RillFactory.Synchronous<T>(RillReference.New("sync-rill-tests"));
 
         private static string NewStringContent()
             => Guid.NewGuid().ToString("N");
@@ -27,6 +27,7 @@ namespace UnitTests.Rills
             ev.Id.Should().Be(id);
             ev.Content.Should().Be(content);
             ev.Sequence.Should().Be(seq);
+            sut.Sequence.Should().Be(seq);
         }
 
         [Fact]

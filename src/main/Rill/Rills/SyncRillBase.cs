@@ -19,15 +19,17 @@ namespace Rill.Rills
         private bool _isCompleted;
         private bool _isDisposed;
 
+        public RillReference Reference { get; }
+        public Sequence Sequence => _sequence;
         public IRillConsumable<object> ConsumeAny { get; }
-
         public IRillConsumable<T> Consume { get; }
 
         protected IEnumerable<IRillConsumer<T>> Consumers
             => _subscriptions.Select(kv => kv.Value.Consumer);
 
-        protected SyncRillBase()
+        protected SyncRillBase(RillReference reference)
         {
+            Reference = reference;
             ConsumeAny = this.OfEventType<T, object>();
             Consume = this;
         }
@@ -102,7 +104,7 @@ namespace Rill.Rills
 
                 var nextSequence = _sequence.Increment();
 
-                if(sequence != null && sequence != nextSequence)
+                if (sequence != null && sequence != nextSequence)
                     throw Exceptions.EventOutOrOrder(nextSequence, sequence);
 
                 _sequence = nextSequence;

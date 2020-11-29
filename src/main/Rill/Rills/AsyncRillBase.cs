@@ -23,15 +23,17 @@ namespace Rill.Rills
         private bool _isCompleted;
         private bool _isDisposed;
 
+        public RillReference Reference { get; }
+        public Sequence Sequence => _sequence;
         public IAsyncRillConsumable<object> ConsumeAny { get; }
-
         public IAsyncRillConsumable<T> Consume { get; }
 
         protected IEnumerable<IAsyncRillConsumer<T>> Consumers
             => _subscriptions.Select(kv => kv.Value.Consumer);
 
-        protected AsyncRillBase()
+        protected AsyncRillBase(RillReference reference)
         {
+            Reference = reference;
             ConsumeAny = this.OfEventType<T, object>();
             Consume = this;
         }

@@ -4,15 +4,15 @@ namespace Rill.Consumers
 {
     internal class DelegatingConsumer<T> : IRillConsumer<T>
     {
-        private readonly Action<Event<T>> _onNew;
-        private readonly Action<EventId>? _onAllSucceeded;
-        private readonly Action<EventId, Exception>? _onAnyFailed;
+        private readonly NewEventHandler<T> _onNew;
+        private readonly SuccessfulEventHandler? _onAllSucceeded;
+        private readonly FailedEventHandler? _onAnyFailed;
         private readonly Action? _onCompleted;
 
         internal DelegatingConsumer(
-            Action<Event<T>> onNew,
-            Action<EventId>? onAllSucceeded = null,
-            Action<EventId, Exception>? onAnyFailed = null,
+            NewEventHandler<T> onNew,
+            SuccessfulEventHandler? onAllSucceeded = null,
+            FailedEventHandler? onAnyFailed = null,
             Action? onCompleted = null)
         {
             _onNew = onNew;
