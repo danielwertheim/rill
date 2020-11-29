@@ -7,9 +7,9 @@ namespace Rill.Extensions
     {
         public static IDisposable Subscribe<T>(
             this IRillConsumable<T> consumable,
-            Action<Event<T>> onNew,
-            Action<EventId>? onAllSucceeded = null,
-            Action<EventId, Exception>? onAnyFailed = null,
+            NewEventHandler<T> onNew,
+            SuccessfulEventHandler? onAllSucceeded = null,
+            FailedEventHandler? onAnyFailed = null,
             Action? onCompleted = null)
             => consumable.Subscribe(ConsumerFactory.SynchronousConsumer(onNew, onAllSucceeded, onAnyFailed, onCompleted));
 

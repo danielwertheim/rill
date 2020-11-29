@@ -7,17 +7,17 @@ namespace Rill
     public static class ConsumerFactory
     {
         public static IRillConsumer<T> SynchronousConsumer<T>(
-            Action<Event<T>> onNew,
-            Action<EventId>? onSucceeded = null,
-            Action<EventId, Exception>? onFailed = null,
+            NewEventHandler<T> onNew,
+            SuccessfulEventHandler? onAllSucceeded = null,
+            FailedEventHandler? onAnyFailed = null,
             Action? onCompleted = null)
-            => new DelegatingConsumer<T>(onNew, onSucceeded, onFailed, onCompleted);
+            => new DelegatingConsumer<T>(onNew, onAllSucceeded, onAnyFailed, onCompleted);
 
         public static IAsyncRillConsumer<T> AsynchronousConsumer<T>(
-            Func<Event<T>, ValueTask> onNew,
-            Func<EventId, ValueTask>? onSucceeded = null,
-            Func<EventId, Exception, ValueTask>? onFailed = null,
+            AsyncNewEventHandler<T> onNew,
+            AsyncSuccessfulEventHandler? onAllSucceeded = null,
+            AsyncFailedEventHandler? onAnyFailed = null,
             Func<ValueTask>? onCompleted = null)
-            => new AsyncDelegatingConsumer<T>(onNew, onSucceeded, onFailed, onCompleted);
+            => new AsyncDelegatingConsumer<T>(onNew, onAllSucceeded, onAnyFailed, onCompleted);
     }
 }

@@ -31,8 +31,8 @@ namespace Rill.Operators
                 _map = map;
             }
 
-            public ValueTask OnNewAsync(Event<TFrom> value)
-                => _consumer.OnNewAsync(value.Map(_map));
+            public ValueTask OnNewAsync(Event<TFrom> ev)
+                => _consumer.OnNewAsync(ev.Map(_map));
 
             public ValueTask OnAllSucceededAsync(EventId eventId)
                 => _consumer.OnAllSucceededAsync(eventId);
