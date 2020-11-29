@@ -8,7 +8,9 @@ namespace ConsoleSample
     {
         static void Main(string[] args)
         {
-            using var rill = RillFactory.Synchronous<IAppEvent>();
+            var rillReference = RillReference.New("app-events");
+
+            using var rill = RillFactory.Synchronous<IAppEvent>(rillReference);
 
             var orderEvents1 = rill
                 .ConsumeAny

@@ -9,7 +9,7 @@ namespace UnitTests.Rills
 {
     public class AsynchronousRillTests
     {
-        private static IAsyncRill<T> NewSut<T>() => RillFactory.Asynchronous<T>();
+        private static IAsyncRill<T> NewSut<T>() => RillFactory.Asynchronous<T>(RillReference.New("async-rill-tests"));
 
         private static string NewStringContent() => Guid.NewGuid().ToString("N");
 

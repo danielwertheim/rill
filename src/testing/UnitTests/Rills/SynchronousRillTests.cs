@@ -9,7 +9,7 @@ namespace UnitTests.Rills
     public class SynchronousRillTests
     {
         private static IRill<T> NewSut<T>()
-            => RillFactory.Synchronous<T>();
+            => RillFactory.Synchronous<T>(RillReference.New("sync-rill-tests"));
 
         private static string NewStringContent()
             => Guid.NewGuid().ToString("N");
