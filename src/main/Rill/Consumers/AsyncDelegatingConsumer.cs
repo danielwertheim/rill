@@ -28,8 +28,8 @@ namespace Rill.Consumers
         public ValueTask OnAllSucceededAsync(EventId eventId)
             => _onAllSucceeded?.Invoke(eventId) ?? ValueTask.CompletedTask;
 
-        public ValueTask OnAnyFailedAsync(EventId eventId, Exception ex)
-            => _onAnyFailed?.Invoke(eventId, ex) ?? ValueTask.CompletedTask;
+        public ValueTask OnAnyFailedAsync(EventId eventId)
+            => _onAnyFailed?.Invoke(eventId) ?? ValueTask.CompletedTask;
 
         public ValueTask OnCompletedAsync()
             => _onCompleted?.Invoke() ?? ValueTask.CompletedTask;

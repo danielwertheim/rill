@@ -27,8 +27,8 @@ namespace Rill.Consumers
         public void OnAllSucceeded(EventId eventId)
             => _onAllSucceeded?.Invoke(eventId);
 
-        public void OnAnyFailed(EventId eventId, Exception ex)
-            => _onAnyFailed?.Invoke(eventId, ex);
+        public void OnAnyFailed(EventId eventId)
+            => _onAnyFailed?.Invoke(eventId);
 
         public void OnCompleted()
             => _onCompleted?.Invoke();

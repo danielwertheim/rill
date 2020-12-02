@@ -39,8 +39,8 @@ namespace Rill.Operators
             public ValueTask OnAllSucceededAsync(EventId eventId)
                 => _consumer.OnAllSucceededAsync(eventId);
 
-            public ValueTask OnAnyFailedAsync(EventId eventId, Exception error)
-                => _consumer.OnAnyFailedAsync(eventId, error);
+            public ValueTask OnAnyFailedAsync(EventId eventId)
+                => _consumer.OnAnyFailedAsync(eventId);
 
             public ValueTask OnCompletedAsync()
                 => _consumer.OnCompletedAsync();

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Rill;
 using Rill.Extensions;
 
@@ -6,11 +8,15 @@ namespace ConsoleSample
 {
     public class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
+            var store = new FakeStore<IAppEvent>();
+
             var rillReference = RillReference.New("app-events");
 
             using var rill = RillFactory.Synchronous<IAppEvent>(rillReference);
+
+            using var transaction = RillTransaction.Begin(rill);
 
             var orderEvents1 = rill
                 .ConsumeAny
@@ -47,6 +53,19 @@ namespace ConsoleSample
             }
 
             rill.Emit(new CustomerCreated("Customer#2"));
+
+            await transaction.CommitAsync(store);
+        }
+
+    }
+
+    public class FakeStore<T> : IRillStore<T>
+    {
+        public Task AppendAsync(IRillCommit<T> commit, CancellationToken? cancellationToken = null)
+        {
+            Console.WriteLine($"Storing ref: {commit.Reference}@{commit.Revision} eventCount:{commit.Events.Count}");
+
+            return Task.CompletedTask;
         }
     }
 

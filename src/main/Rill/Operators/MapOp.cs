@@ -36,8 +36,8 @@ namespace Rill.Operators
             public void OnAllSucceeded(EventId eventId)
                 => _consumer.OnAllSucceeded(eventId);
 
-            public void OnAnyFailed(EventId eventId, Exception error)
-                => _consumer.OnAnyFailed(eventId, error);
+            public void OnAnyFailed(EventId eventId)
+                => _consumer.OnAnyFailed(eventId);
 
             public void OnCompleted()
                 => _consumer.OnCompleted();

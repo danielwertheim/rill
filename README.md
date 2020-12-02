@@ -12,6 +12,22 @@ There are two main tracks of an `Rill`: Asynchronous Rill (`IAsyncRill<T>`) and 
 
 You create them via `RillFactory.Asynchronous<T>()` and `RillFactory.Synchronous<T>()`. The former uses consumers that has asynchronous members, while the later uses consumers with synchronous members.
 
+### `IRillCommit<T>` & `IRillStore<T>`
+A commit defines the result of a persisted sequential batch of events against an `IRillStore<T>`. A Rill accepts sequential emits of events so the sequencing is used as an optimistic concurrency check.
+
+```
+[Rill:Sequence]
+R:0
+R:1 ev1
+R:2 ev2
+Commit:1 { R:1 |->| R:2}
+
+R:2
+R:3 ev3
+R:4 ev4
+Commit:2 { R:3 |->| R:4}
+```
+
 ## Subscribe
 In order to react on events in a consumable `Rill`, you have to subscribe one or more consumers. This is done via:
 

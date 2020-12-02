@@ -78,5 +78,16 @@ namespace UnitTests
             initial.Should().NotBe(seq2);
             seq1.Should().Be(seq2);
         }
+
+        [Fact]
+        public void Copying_produces_a_new_instance()
+        {
+            var initial = Sequence.None;
+
+            var copy = initial.Copy();
+
+            ReferenceEquals(initial, copy).Should().BeFalse();
+            copy.Should().Be(initial);
+        }
     }
 }

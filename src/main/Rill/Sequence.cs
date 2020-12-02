@@ -32,11 +32,20 @@ namespace Rill
             return From(_value + change);
         }
 
-        public Sequence Increment() => Add(1);
+        public Sequence Increment()
+            => Add(1);
 
-        public bool IsNone() => this == None;
-        public bool IsFirst() => this == First;
-        public bool IsMax() => this == Max;
+        public Sequence Copy()
+            => From(_value);
+
+        public bool IsNone()
+            => this == None;
+
+        public bool IsFirst()
+            => this == First;
+
+        public bool IsMax()
+            => this == Max;
 
         public bool IsBetweenInclusive(long minInclusive, long maxInclusive)
             => _value >= minInclusive && _value <= maxInclusive;
