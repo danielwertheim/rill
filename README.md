@@ -116,27 +116,36 @@ rill.ConsumeAny
 
 ## Sample
 For more extensive samples, have a look [here in the repo](src/samples).
+
 ```csharp
 using System;
 using System.Threading.Tasks;
 using ConsoleSample.Events;
 using ConsoleSample.Views;
 using Rill;
+using Rill.Extensions;
+using Rill.Stores.InMemory;
 
 namespace ConsoleSample
 {
-    public class Program
+    public static class Program
     {
-        static async Task Main(string[] args)
+        public static async Task Main()
         {
             //A Rill store is used to persist and read events
-            var orderStore = new FakeStore<IOrderEvent>();
+            var orderStore = new InMemoryRillStore<IOrderEvent>();
 
-            //A Reference identifies a certain Rill.
-            //Via its name and id
+            //A Reference identifies a certain Rill, via its name and id
             var rillReference = RillReference.New("order");
 
-            using var rill = RillFactory.Synchronous<IOrderEvent>(rillReference);
+            await PlaceAndApproveOrderAsync(orderStore, rillReference);
+
+            await ShipOrderAsync(orderStore, rillReference);
+        }
+
+        private static async Task PlaceAndApproveOrderAsync(IRillStore<IOrderEvent> orderStore, RillReference reference)
+        {
+            using var rill = RillFactory.Synchronous<IOrderEvent>(reference);
 
             //Order view is e.g. an application specific implementation.
             //In this case, a simple aggregation of an order view.
@@ -147,7 +156,7 @@ namespace ConsoleSample
             using var transaction = RillTransaction.Begin(rill);
 
             rill.Emit(new OrderPlaced(
-                GenerateOrderNumber(),
+                "order#1",
                 "customer#1",
                 100M,
                 DateTime.UtcNow));
@@ -158,13 +167,27 @@ namespace ConsoleSample
 
             view.Dump("After OrderApproved");
 
+            var commit = await transaction.CommitAsync(orderStore);
+            Console.WriteLine($"Committed {commit.Id}@{commit.SequenceRange}");
+        }
+
+        private static async Task ShipOrderAsync(IRillStore<IOrderEvent> orderStore, RillReference reference)
+        {
+            using var rill = RillFactory.Synchronous<IOrderEvent>(reference);
+
+            var view = new OrderView(rill);
+
+            foreach (var ev in orderStore.ReadEvents(reference))
+                rill.Emit(ev);
+
+            using var transaction = RillTransaction.Begin(rill);
+
             rill.Emit(new OrderShipped(view.OrderNumber!, DateTime.UtcNow));
 
             view.Dump("After OrderShipped");
 
-            commit = await transaction.CommitAsync(orderStore);
-
-            Console.WriteLine($"Committed {commit.Id}@{commit.Revision}");
+            var commit = await transaction.CommitAsync(orderStore);
+            Console.WriteLine($"Committed {commit.Id}@{commit.SequenceRange}");
         }
     }
 }

@@ -15,23 +15,23 @@ namespace Rill
         public static IRillCommit<T> From<T>(
             CommitId id,
             RillReference reference,
-            Revision revision,
+            SequenceRange sequenceRange,
             Timestamp timestamp,
-            IImmutableList<Event<T>> events) => RillCommit<T>.From(id, reference, revision, timestamp, events);
+            IImmutableList<Event<T>> events) => RillCommit<T>.From(id, reference, sequenceRange, timestamp, events);
     }
 
     internal sealed class RillCommit<T> : IRillCommit<T>
     {
         public CommitId Id { get; }
         public RillReference Reference { get; }
-        public Revision Revision { get; }
+        public SequenceRange SequenceRange { get; }
         public Timestamp Timestamp { get; }
         public IImmutableList<Event<T>> Events { get; }
 
         private RillCommit(
             CommitId id,
             RillReference reference,
-            Revision revision,
+            SequenceRange sequenceRange,
             Timestamp timestamp,
             IImmutableList<Event<T>> events)
         {
@@ -40,7 +40,7 @@ namespace Rill
 
             Id = id;
             Reference = reference;
-            Revision = revision;
+            SequenceRange = sequenceRange;
             Timestamp = timestamp;
             Events = events;
         }
@@ -53,23 +53,23 @@ namespace Rill
             return events;
         }
 
-        internal static RillCommit<T> From(
+        internal static IRillCommit<T> From(
             CommitId id,
             RillReference reference,
-            Revision revision,
+            SequenceRange sequenceRange,
             Timestamp timestamp,
             IImmutableList<Event<T>> events)
         {
-            return new RillCommit<T>(id, reference, revision, timestamp, RequireAtLeastOneEvent(events));
+            return new RillCommit<T>(id, reference, sequenceRange, timestamp, RequireAtLeastOneEvent(events));
         }
 
-        internal static RillCommit<T> New(
+        internal static IRillCommit<T> New(
             RillReference reference,
             IImmutableList<Event<T>> events)
         {
             events = RequireAtLeastOneEvent(events);
 
-            var revision = Revision.From(events[0].Sequence, events[^1].Sequence);
+            var revision = SequenceRange.From(events[0].Sequence, events[^1].Sequence);
 
             return From(CommitId.New(), reference, revision, Timestamp.New(), events);
         }
