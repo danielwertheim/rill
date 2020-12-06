@@ -2,35 +2,40 @@
 
 namespace Rill
 {
-    public sealed class Revision : IEquatable<Revision>
+    public sealed class SequenceRange : IEquatable<SequenceRange>
     {
         public Sequence Lower { get; }
         public Sequence Upper { get; }
 
-        private Revision(Sequence lower, Sequence upper)
+        public static readonly SequenceRange Any = new SequenceRange(Sequence.First, Sequence.Max);
+
+        private SequenceRange(Sequence lower, Sequence upper)
         {
             Lower = lower;
             Upper = upper;
         }
 
-        public static Revision From(Sequence lower, Sequence upper)
+        public static SequenceRange From(Sequence lower, Sequence upper)
         {
             if(upper < lower)
                 throw new ArgumentException("Range must be from low to high.");
 
-            return new Revision(lower, upper);
+            return new SequenceRange(lower, upper);
         }
+
+        public static SequenceRange FirstTo(Sequence upper)
+            => From(Sequence.First, upper);
 
         public bool Includes(Sequence value)
             => value >= Lower && value <= Upper;
 
-        public static bool operator ==(Revision? left, Revision? right)
+        public static bool operator ==(SequenceRange? left, SequenceRange? right)
             => Equals(left, right);
 
-        public static bool operator !=(Revision? left, Revision? right)
+        public static bool operator !=(SequenceRange? left, SequenceRange? right)
             => !Equals(left, right);
 
-        public bool Equals(Revision? other)
+        public bool Equals(SequenceRange? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -38,7 +43,7 @@ namespace Rill
         }
 
         public override bool Equals(object? obj)
-            => ReferenceEquals(this, obj) || obj is Revision other && Equals(other);
+            => ReferenceEquals(this, obj) || obj is SequenceRange other && Equals(other);
 
         public override int GetHashCode()
             => HashCode.Combine(Lower, Upper);

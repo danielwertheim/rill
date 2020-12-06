@@ -12,7 +12,7 @@ namespace Rill
     {
         CommitId Id { get; }
         RillReference Reference { get; }
-        Revision Revision { get; }
+        SequenceRange SequenceRange { get; }
         Timestamp Timestamp { get; }
         IImmutableList<Event<T>> Events { get; }
     }

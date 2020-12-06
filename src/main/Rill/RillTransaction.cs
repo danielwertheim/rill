@@ -15,18 +15,20 @@ namespace Rill
 
     internal sealed class RillTransaction<T> : IRillTransaction<T>
     {
-        private readonly RillReference _rillReference;
+        private readonly SemaphoreSlim _sync;
+        private readonly IRill<T> _rill;
         private readonly ConcurrentQueue<Event<T>> _stage;
-        private readonly IDisposable _rillSubscription;
+        private IDisposable? _rillSubscription;
         private bool _isDisposed;
         private long _ackCount;
         private long _nackCount;
 
-        private RillTransaction(IRill<T> rill)
+        private IDisposable Subscribe()
         {
-            _stage = new ConcurrentQueue<Event<T>>();
-            _rillReference = rill.Reference;
-            _rillSubscription = rill.Consume.Subscribe(
+            if (_rillSubscription != null)
+                throw new InvalidOperationException("Can not subscribe while there is an active subscription.");
+
+            return _rill.Consume.Subscribe(
                 ev => _stage.Enqueue(ev),
                 successfulId => { _ackCount = Interlocked.Increment(ref _ackCount); },
                 failedId =>
@@ -36,6 +38,14 @@ namespace Rill
                     // ReSharper disable once ConstantConditionalAccessQualifier
                     _rillSubscription?.Dispose();
                 });
+        }
+
+        private RillTransaction(IRill<T> rill)
+        {
+            _sync = new SemaphoreSlim(1, 1);
+            _rill = rill;
+            _stage = new ConcurrentQueue<Event<T>>();
+            _rillSubscription = Subscribe();
         }
 
         internal static IRillTransaction<T> Begin(IRill<T> rill)
@@ -48,7 +58,8 @@ namespace Rill
 
             _isDisposed = true;
 
-            _rillSubscription.Dispose();
+            _rillSubscription?.Dispose();
+            _sync.Dispose();
         }
 
         private void ThrowIfDisposed()
@@ -65,26 +76,41 @@ namespace Rill
         {
             ThrowIfDisposed();
 
-            _rillSubscription.Dispose();
+            _rillSubscription?.Dispose();
+            _rillSubscription = null;
 
-            if (!TryDrainFor(TimeSpan.FromMilliseconds(250)))
-                throw new InvalidOperationException("Can not commit when staged event count differs from total acked events (positive and negative).");
+            await _sync.WaitAsync(cancellationToken);
 
-            if (_stage.IsEmpty)
-                throw new InvalidOperationException("Can not commit when no events has been intercepted.");
+            try
+            {
+                if (!TryDrainFor(TimeSpan.FromMilliseconds(250)))
+                    throw new InvalidOperationException("Can not commit when staged event count differs from total acked events (positive and negative).");
 
-            if (_nackCount > 0)
-                throw new InvalidOperationException("Can not commit when there's knowledge about a failed event.");
+                if (_stage.IsEmpty)
+                    throw new InvalidOperationException("Can not commit when no events has been intercepted.");
 
-            var commit = RillCommit.New(
-                _rillReference,
-                _stage.ToImmutableList());
+                if (_nackCount > 0)
+                    throw new InvalidOperationException("Can not commit when there's knowledge about a failed event.");
 
-            await store.AppendAsync(
-                commit,
-                cancellationToken);
+                var commit = RillCommit.New(
+                    _rill.Reference,
+                    _stage.ToImmutableList());
 
-            return commit;
+                await store.AppendAsync(
+                    commit,
+                    cancellationToken);
+
+                _stage.Clear();
+                _ackCount = 0;
+                _nackCount = 0;
+                _rillSubscription = Subscribe();
+
+                return commit;
+            }
+            finally
+            {
+                _sync.Release();
+            }
         }
     }
 }

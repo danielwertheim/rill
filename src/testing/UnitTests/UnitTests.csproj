@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\main\Rill.Stores.InMemory\Rill.Stores.InMemory.csproj" />
     <ProjectReference Include="..\..\main\Rill\Rill.csproj" />
   </ItemGroup>
 
