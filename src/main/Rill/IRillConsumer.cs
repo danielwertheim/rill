@@ -25,8 +25,7 @@ namespace Rill
         /// Invoked when the event caused a failure in any consumer.
         /// </summary>
         /// <param name="eventId"></param>
-        /// <param name="ex"></param>
-        void OnAnyFailed(EventId eventId, Exception ex);
+        void OnAnyFailed(EventId eventId);
 
         /// <summary>
         /// Invoked when the Rill signals it has completed and no more

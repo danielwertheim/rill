@@ -43,8 +43,8 @@ namespace UnitTests.Rills
         public void OnAllSucceeded(EventId eventId)
             => Interceptions.InOnAllSucceeded(eventId);
 
-        public void OnAnyFailed(EventId eventId, Exception ex)
-            => Interceptions.InOnAnyFailed(eventId, ex);
+        public void OnAnyFailed(EventId eventId)
+            => Interceptions.InOnAnyFailed(eventId);
 
         public void OnCompleted()
             => Interceptions.InOnCompleted();

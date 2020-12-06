@@ -11,8 +11,6 @@ namespace Rill.Rills
     {
         private readonly object _sync = new object();
 
-        private Sequence _sequence = Sequence.None;
-
         private readonly ConcurrentDictionary<int, ObSubscription> _subscriptions
             = new ConcurrentDictionary<int, ObSubscription>();
 
@@ -20,7 +18,7 @@ namespace Rill.Rills
         private bool _isDisposed;
 
         public RillReference Reference { get; }
-        public Sequence Sequence => _sequence;
+        public Sequence Sequence { get; private set; } = Sequence.None;
         public IRillConsumable<object> ConsumeAny { get; }
         public IRillConsumable<T> Consume { get; }
 
@@ -102,12 +100,12 @@ namespace Rill.Rills
                 ThrowIfDisposed();
                 ThrowIfCompleted();
 
-                var nextSequence = _sequence.Increment();
+                var nextSequence = Sequence.Increment();
 
                 if (sequence != null && sequence != nextSequence)
                     throw Exceptions.EventOutOrOrder(nextSequence, sequence);
 
-                _sequence = nextSequence;
+                Sequence = nextSequence;
 
                 var ev = Event.Create(content, id, nextSequence);
 

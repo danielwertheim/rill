@@ -46,14 +46,14 @@ namespace Rill.Rills
             }
             else
             {
-                var aex = new AggregateException("Exception(s) while notifying consumers of new event.", exceptions.ToArray());
+                //TODO: Log new AggregateException("Exception(s) while notifying consumers of new event.", exceptions.ToArray());
                 exceptions.Clear();
 
                 foreach (var consumer in Consumers)
                 {
                     try
                     {
-                        await consumer.OnAnyFailedAsync(ev.Id, aex).ConfigureAwait(false);
+                        await consumer.OnAnyFailedAsync(ev.Id).ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {

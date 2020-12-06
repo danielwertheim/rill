@@ -50,9 +50,9 @@ namespace UnitTests.Rills
             return ValueTask.CompletedTask;
         }
 
-        public ValueTask OnAnyFailedAsync(EventId eventId, Exception ex)
+        public ValueTask OnAnyFailedAsync(EventId eventId)
         {
-            Interceptions.InOnAnyFailed(eventId, ex);
+            Interceptions.InOnAnyFailed(eventId);
 
             return ValueTask.CompletedTask;
         }

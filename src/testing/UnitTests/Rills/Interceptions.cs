@@ -17,11 +17,11 @@ namespace UnitTests.Rills
     {
         private readonly List<Event<T>> _inOnNew = new List<Event<T>>();
         private readonly List<EventId> _inOnAllSucceeded = new List<EventId>();
-        private readonly List<(EventId, Exception)> _inOnAnyFailed = new List<(EventId, Exception)>();
+        private readonly List<EventId> _inOnAnyFailed = new List<EventId>();
 
         public IReadOnlyList<Event<T>> OnNew => _inOnNew;
         public IReadOnlyList<EventId> OnAllSucceeded => _inOnAllSucceeded;
-        public IReadOnlyList<(EventId Id, Exception Ex)> OnAnyFailed => _inOnAnyFailed;
+        public IReadOnlyList<EventId> OnAnyFailed => _inOnAnyFailed;
         public bool OnCompletedIntercepted { get; private set; }
 
         internal void InOnNew(Event<T> ev)
@@ -44,12 +44,12 @@ namespace UnitTests.Rills
             return ValueTask.CompletedTask;
         }
 
-        internal void InOnAnyFailed(EventId id, Exception ex)
-            => _inOnAnyFailed.Add((id, ex));
+        internal void InOnAnyFailed(EventId id)
+            => _inOnAnyFailed.Add(id);
 
-        internal ValueTask InOnAnyFailedAsync(EventId id, Exception ex)
+        internal ValueTask InOnAnyFailedAsync(EventId id)
         {
-            _inOnAnyFailed.Add((id, ex));
+            _inOnAnyFailed.Add((id));
 
             return ValueTask.CompletedTask;
         }
@@ -103,13 +103,13 @@ namespace UnitTests.Rills
             => _interceptions.OnAllSucceeded.Should().BeEmpty();
 
         public void OnAllSucceededOnlyHasId(EventId id)
-            => _interceptions.OnAllSucceeded.Should().OnlyContain(i => i == id);
+            => _interceptions.OnAllSucceeded.Should().OnlyContain(interceptedId => interceptedId == id);
 
         public void OnAnyFailedIsEmpty()
             => _interceptions.OnAnyFailed.Should().BeEmpty();
 
         public void OnAnyFailedOnlyHasId(EventId id)
-            => _interceptions.OnAnyFailed.Should().OnlyContain(i => i.Id == id);
+            => _interceptions.OnAnyFailed.Should().OnlyContain(interceptedId => interceptedId == id);
 
         public void OnCompletedWasCalled()
             => _interceptions.OnCompletedIntercepted.Should().BeTrue();

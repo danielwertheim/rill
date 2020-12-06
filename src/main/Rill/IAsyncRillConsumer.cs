@@ -26,8 +26,7 @@ namespace Rill
         /// Invoked when the event caused a failure in any consumer.
         /// </summary>
         /// <param name="eventId"></param>
-        /// <param name="ex"></param>
-        ValueTask OnAnyFailedAsync(EventId eventId, Exception ex);
+        ValueTask OnAnyFailedAsync(EventId eventId);
 
         /// <summary>
         /// Invoked when the Rill signals it has completed and no more

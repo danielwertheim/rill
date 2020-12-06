@@ -18,8 +18,7 @@ namespace Rill
     /// Handler used to handle the notification of a failed event dispatch in an async consumer.
     /// </summary>
     /// <param name="eventId"></param>
-    /// <param name="ex"></param>
-    public delegate ValueTask AsyncFailedEventHandler(EventId eventId, Exception ex);
+    public delegate ValueTask AsyncFailedEventHandler(EventId eventId);
 
     /// <summary>
     /// Handler used to handle the dispatch of a new event in a consumer.
@@ -36,6 +35,5 @@ namespace Rill
     /// Handler used to handle the notification of a failed event dispatch in a consumer.
     /// </summary>
     /// <param name="eventId"></param>
-    /// <param name="ex"></param>
-    public delegate void FailedEventHandler(EventId eventId, Exception ex);
+    public delegate void FailedEventHandler(EventId eventId);
 }
