@@ -18,47 +18,59 @@ namespace UnitTests
             return (rill, new InterceptingStore<T>(), tran);
         }
 
+        private static Event<string> CreateEvent(int n = 0)
+            => Event<string>.Create(Fake.Strings.Random(), EventId.New(), n == 0 ? Sequence.First : Sequence.First.Add(n));
+
+        private static Event<string>[] CreateEvents()
+            => new[]
+            {
+                CreateEvent(),
+                CreateEvent(1),
+                CreateEvent(2)
+            };
+
         [Fact]
-        public async Task Committing_When_empty_does_not_call_store_and_yields_no_commit()
+        public void Requires_at_least_one_event()
         {
             var (_, store, sut) = NewScenario<string>();
 
-            var commit = await sut.CommitAsync(store);
+            Func<Task> failing = async () => await sut.CommitAsync(store);
 
-            commit.Should().BeNull();
-            store.HasNoAppends();
+            failing.Should().ThrowExactly<InvalidOperationException>().WithMessage("Can not commit when no events has been intercepted.");
+        }
+
+        [Fact]
+        public void Requires_that_no_event_has_failed()
+        {
+            var (rill, store, sut) = NewScenario<string>();
+            rill.Consume.Subscribe(e => throw new Exception("FAIL!"));
+            rill.Emit(CreateEvent());
+
+            Func<Task> failing = async () => await sut.CommitAsync(store);
+
+            failing.Should().ThrowExactly<InvalidOperationException>().WithMessage("Can not commit when there's knowledge about a failed event.");
         }
 
         [Fact]
         public async Task Committing_Appends_events_in_sequence()
         {
             var (rill, store, sut) = NewScenario<string>();
-            var expectedEvents = new[]
-            {
-                Event<string>.Create(Fake.Strings.Random(), EventId.New(), Sequence.First),
-                Event<string>.Create(Fake.Strings.Random(), EventId.New(), Sequence.First.Increment())
-            };
-            rill.Emit(expectedEvents.First());
-            rill.Emit(expectedEvents.Last());
+            var expectedEvents = CreateEvents();
+            rill.Emit(expectedEvents[0]);
+            rill.Emit(expectedEvents[1]);
+            rill.Emit(expectedEvents[^1]);
 
             await sut.CommitAsync(store);
 
             store.HasAppendCount(1);
-            store.Appended(
-                expectedEvents.First(),
-                expectedEvents.Last());
+            store.Appended(expectedEvents);
         }
 
         [Fact]
         public async Task Committing_returns_commit()
         {
             var (rill, store, sut) = NewScenario<string>();
-            var expectedEvents = new[]
-            {
-                Event<string>.Create(Fake.Strings.Random(), EventId.New(), Sequence.First),
-                Event<string>.Create(Fake.Strings.Random(), EventId.New(), Sequence.First.Add(1)),
-                Event<string>.Create(Fake.Strings.Random(), EventId.New(), Sequence.First.Add(2))
-            };
+            var expectedEvents = CreateEvents();
             rill.Emit(expectedEvents[0]);
             rill.Emit(expectedEvents[1]);
             rill.Emit(expectedEvents[^1]);

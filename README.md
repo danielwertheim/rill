@@ -115,102 +115,100 @@ rill.ConsumeAny
 ```
 
 ## Sample
+For more extensive samples, have a look [here in the repo](src/samples).
 ```csharp
 using System;
+using System.Threading.Tasks;
+using ConsoleSample.Events;
+using ConsoleSample.Views;
 using Rill;
-using Rill.Extensions;
 
 namespace ConsoleSample
 {
     public class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            //A Rill reference acts as an unique-identifier for the Rill
-            //by exposing a Name and an Id.
-            var rillReference = RillReference.New("app-events");
+            //A Rill store is used to persist and read events
+            var orderStore = new FakeStore<IOrderEvent>();
 
-            using var rill = RillFactory.Synchronous<IAppEvent>();
+            //A Reference identifies a certain Rill.
+            //Via its name and id
+            var rillReference = RillReference.New("order");
 
-            var orderEvents1 = rill
-                .ConsumeAny
-                .OfEventType<IOrderEvent>();
+            using var rill = RillFactory.Synchronous<IOrderEvent>(rillReference);
 
-            var orderEvents2 = rill
-                .Consume
-                .OfEventType<IAppEvent, IOrderEvent>();
+            //Order view is e.g. an application specific implementation.
+            //In this case, a simple aggregation of an order view.
+            var view = new OrderView(rill);
 
-            var customerEvents = rill
-                .Consume
-                .OfEventType<IAppEvent, ICustomerEvent>();
+            //A transaction monitors the events dispatched on a Rill
+            //and is used to commit batches of events to a store.
+            using var transaction = RillTransaction.Begin(rill);
 
-            orderEvents1
-                .Where(ev => ev.Sequence % 2 != 0)
-                .Subscribe(ev
-                    => Console.WriteLine($"Odd seq order handler: Order: {ev.Content.OrderNumber}"));
+            rill.Emit(new OrderPlaced(
+                GenerateOrderNumber(),
+                "customer#1",
+                100M,
+                DateTime.UtcNow));
 
-            orderEvents2
-                .Where(ev => ev.Sequence % 2 == 0)
-                .Subscribe(ev
-                    => Console.WriteLine($"Even seq Order handler: Order: {ev.Content.OrderNumber}"));
+            view.Dump("After OrderPlaced");
 
-            customerEvents
-                .Subscribe(ev
-                    => Console.WriteLine($"Customer handler: Customer: {ev.Content.CustomerNumber}"));
+            rill.Emit(new OrderApproved(view.OrderNumber!, DateTime.UtcNow));
 
-            rill.Emit(new CustomerCreated("Customer#1"));
+            view.Dump("After OrderApproved");
 
-            for (var i = 1; i <= 5; i++)
-            {
-                rill.Emit(new OrderInitiated($"Order#{i}"));
-                rill.Emit(new OrderConfirmed($"Order#{i}"));
-            }
+            rill.Emit(new OrderShipped(view.OrderNumber!, DateTime.UtcNow));
 
-            rill.Emit(new CustomerCreated("Customer#2"));
-        }
-    }
+            view.Dump("After OrderShipped");
 
-    public interface IAppEvent { }
+            commit = await transaction.CommitAsync(orderStore);
 
-    public interface ICustomerEvent : IAppEvent
-    {
-        public string CustomerNumber { get; }
-    }
-
-    public interface IOrderEvent : IAppEvent
-    {
-        string OrderNumber { get; }
-    }
-
-    public class CustomerCreated : ICustomerEvent
-    {
-        public string CustomerNumber { get; }
-
-        public CustomerCreated(string customerNumber)
-        {
-            CustomerNumber = customerNumber;
-        }
-    }
-
-    public class OrderInitiated : IOrderEvent
-    {
-        public string OrderNumber { get; }
-
-        public OrderInitiated(string orderNumber)
-        {
-            OrderNumber = orderNumber;
-        }
-    }
-
-    public class OrderConfirmed : IOrderEvent
-    {
-        public string OrderNumber { get; }
-
-        public OrderConfirmed(string orderNumber)
-        {
-            OrderNumber = orderNumber;
+            Console.WriteLine($"Committed {commit.Id}@{commit.Revision}");
         }
     }
 }
+```
 
+The `OrderView` in the sample is just a simple aggregation representing an order:
+
+```csharp
+public class OrderView
+{
+    public RillReference Reference { get; }
+
+    public string? OrderNumber { get; private set; }
+    public string? CustomerRef { get; private set; }
+    public decimal? Amount { get; private set; }
+    public DateTime? PlacedAt { get; private set; }
+    public DateTime? ApprovedAt { get; private set; }
+    public DateTime? ShippedAt { get; private set; }
+
+    public OrderView(IRill<IOrderEvent> rill)
+    {
+        Reference = rill.Reference;
+        rill.OfOrderEvent<OrderPlaced>().Subscribe(ev =>
+        {
+            OrderNumber = ev.Content.OrderNumber;
+            PlacedAt = ev.Content.PlacedAt;
+            CustomerRef = ev.Content.CustomerRef;
+            Amount = ev.Content.Amount;
+        });
+        rill.OfOrderEvent<OrderApproved>().Subscribe(
+            ev => ApprovedAt = ev.Content.ApprovedAt);
+        rill.OfOrderEvent<OrderShipped>().Subscribe(
+            ev => ShippedAt = ev.Content.ShippedAt);
+    }
+}
+```
+
+To simplify the order event filtering above, you could do a simple extension method:
+
+```csharp
+internal static class OrderRillExtensions
+{
+    internal static IRillConsumable<T> OfOrderEvent<T>(
+        this IRill<IOrderEvent> rill) where T : IOrderEvent
+        => rill.Consume.OfEventType<IOrderEvent, T>();
+}
 ```
