@@ -61,7 +61,7 @@ namespace Rill
             => _ackCount + _nackCount == _stage.Count ||
                SpinWait.SpinUntil(() => _ackCount + _nackCount == _stage.Count, interval);
 
-        public async Task<IRillCommit<T>?> CommitAsync(IRillStore<T> store, CancellationToken cancellationToken = default)
+        public async Task<IRillCommit<T>> CommitAsync(IRillStore<T> store, CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
 
@@ -70,11 +70,11 @@ namespace Rill
             if (!TryDrainFor(TimeSpan.FromMilliseconds(250)))
                 throw new InvalidOperationException("Can not commit when staged event count differs from total acked events (positive and negative).");
 
+            if (_stage.IsEmpty)
+                throw new InvalidOperationException("Can not commit when no events has been intercepted.");
+
             if (_nackCount > 0)
                 throw new InvalidOperationException("Can not commit when there's knowledge about a failed event.");
-
-            if (_stage.IsEmpty)
-                return null;
 
             var commit = RillCommit.New(
                 _rillReference,

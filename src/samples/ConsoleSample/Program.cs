@@ -1,118 +1,50 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
+using ConsoleSample.Events;
+using ConsoleSample.Views;
 using Rill;
-using Rill.Extensions;
 
 namespace ConsoleSample
 {
     public class Program
     {
+        private static string GenerateOrderNumber()
+            => Guid.NewGuid().ToString("N");
+
         static async Task Main(string[] args)
         {
-            var store = new FakeStore<IAppEvent>();
+            var orderStore = new FakeStore<IOrderEvent>();
 
-            var rillReference = RillReference.New("app-events");
+            var rillReference = RillReference.New("order");
 
-            using var rill = RillFactory.Synchronous<IAppEvent>(rillReference);
+            using var rill = RillFactory.Synchronous<IOrderEvent>(rillReference);
+
+            var view = new OrderView(rill);
 
             using var transaction = RillTransaction.Begin(rill);
 
-            var orderEvents1 = rill
-                .ConsumeAny
-                .OfEventType<IOrderEvent>();
+            rill.Emit(new OrderPlaced(
+                GenerateOrderNumber(),
+                "customer#1",
+                100M,
+                DateTime.UtcNow));
 
-            var orderEvents2 = rill
-                .Consume
-                .OfEventType<IAppEvent, IOrderEvent>();
+            view.Dump("After OrderPlaced");
 
-            var customerEvents = rill
-                .Consume
-                .OfEventType<IAppEvent, ICustomerEvent>();
+            rill.Emit(new OrderApproved(view.OrderNumber!, DateTime.UtcNow));
 
-            orderEvents1
-                .Where(ev => ev.Sequence % 2 != 0)
-                .Subscribe(ev
-                    => Console.WriteLine($"Odd seq order handler: Order: {ev.Content.OrderNumber}"));
+            view.Dump("After OrderApproved");
 
-            orderEvents2
-                .Where(ev => ev.Sequence % 2 == 0)
-                .Subscribe(ev
-                    => Console.WriteLine($"Even seq Order handler: Order: {ev.Content.OrderNumber}"));
+            var commit = await transaction.CommitAsync(orderStore);
+            Console.WriteLine($"Committed {commit.Id}@{commit.Revision}");
 
-            customerEvents
-                .Subscribe(ev
-                    => Console.WriteLine($"Customer handler: Customer: {ev.Content.CustomerNumber}"));
+            rill.Emit(new OrderShipped(view.OrderNumber!, DateTime.UtcNow));
 
-            rill.Emit(new CustomerCreated("Customer#1"));
+            view.Dump("After OrderShipped");
 
-            for (var i = 1; i <= 5; i++)
-            {
-                rill.Emit(new OrderInitiated($"Order#{i}"));
-                rill.Emit(new OrderConfirmed($"Order#{i}"));
-            }
-
-            rill.Emit(new CustomerCreated("Customer#2"));
-
-            await transaction.CommitAsync(store);
+            commit = await transaction.CommitAsync(orderStore);
+            Console.WriteLine($"Committed {commit.Id}@{commit.Revision}");
         }
 
-    }
-
-    public class FakeStore<T> : IRillStore<T>
-    {
-        public Task AppendAsync(IRillCommit<T> commit, CancellationToken? cancellationToken = null)
-        {
-            Console.WriteLine($"Storing ref: {commit.Reference}@{commit.Revision} eventCount:{commit.Events.Count}");
-
-            return Task.CompletedTask;
-        }
-    }
-
-    public interface IAppEvent
-    {
-    }
-
-    public interface ICustomerEvent : IAppEvent
-    {
-        public string CustomerNumber { get; }
-    }
-
-    public interface IOrderEvent : IAppEvent
-    {
-        string OrderNumber { get; }
-    }
-
-    public class CustomerCreated : ICustomerEvent
-    {
-        public string CustomerNumber { get; }
-
-        public CustomerCreated(
-            string customerNumber)
-        {
-            CustomerNumber = customerNumber;
-        }
-    }
-
-    public class OrderInitiated : IOrderEvent
-    {
-        public string OrderNumber { get; }
-
-        public OrderInitiated(
-            string orderNumber)
-        {
-            OrderNumber = orderNumber;
-        }
-    }
-
-    public class OrderConfirmed : IOrderEvent
-    {
-        public string OrderNumber { get; }
-
-        public OrderConfirmed(
-            string orderNumber)
-        {
-            OrderNumber = orderNumber;
-        }
     }
 }
