@@ -2,20 +2,39 @@
 
 namespace Rill
 {
-    public static class Event
+    public sealed class Event : Event<object>
     {
-        public static Event<T> Create<T>(T content, EventId? id = null, Sequence? sequence = null, Timestamp? timestamp = null)
-            => Event<T>.Create(content, id, sequence, timestamp);
+        private Event(
+            EventId id,
+            Sequence sequence,
+            Timestamp timestamp,
+            object content) : base(id, sequence, timestamp, content)
+        {
+        }
+
+        public new static Event From(EventId id, Sequence sequence, Timestamp timestamp, object content)
+            => new(
+                id,
+                sequence,
+                timestamp,
+                content);
+
+        public new static Event New(object content, EventId? id = null, Sequence? sequence = null, Timestamp? timestamp = null)
+            => From(
+                id ?? EventId.New(),
+                sequence ?? Sequence.First,
+                timestamp ?? Timestamp.New(),
+                content);
     }
 
-    public sealed class Event<T> : IEquatable<Event<T>>
+    public class Event<T> : IEquatable<Event<T>> where T : class
     {
         public EventId Id { get; }
         public Timestamp Timestamp { get; }
         public Sequence Sequence { get; }
         public T Content { get; }
 
-        private Event(
+        protected Event(
             EventId id,
             Sequence sequence,
             Timestamp timestamp,
@@ -24,20 +43,30 @@ namespace Rill
             Id = id;
             Sequence = sequence;
             Timestamp = timestamp;
-            Content = content;
+            Content = content ?? throw new ArgumentNullException(nameof(content));
         }
 
-        public static Event<T> Create(T content, EventId? id = null, Sequence? sequence = null, Timestamp? timestamp = null)
-            => new Event<T>(
+        public static Event<T> From(EventId id, Sequence sequence, Timestamp timestamp, T content)
+            => new(
+                id,
+                sequence,
+                timestamp,
+                content);
+
+        public static Event<T> New(T content, EventId? id = null, Sequence? sequence = null, Timestamp? timestamp = null)
+            => From(
                 id ?? EventId.New(),
                 sequence ?? Sequence.First,
                 timestamp ?? Timestamp.New(),
                 content);
 
-        public Event<TResult> Map<TResult>(Func<T, TResult> map)
-            => new Event<TResult>(Id, Sequence, Timestamp, map(Content));
+        public Event<TResult> MapContent<TResult>(Func<T, TResult> map) where TResult : class
+            => new(Id, Sequence, Timestamp, map(Content));
 
-        public bool TryCast<TResult>(out Event<TResult>? ev)
+        public Event AsUntyped()
+            => Event.From(Id, Sequence, Timestamp, Content);
+
+        public bool TryCast<TResult>(out Event<TResult>? ev) where TResult : class
         {
             if (Content is TResult result)
             {

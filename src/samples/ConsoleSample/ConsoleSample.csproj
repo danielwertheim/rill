@@ -7,8 +7,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\main\Rill.Stores.EfCore\Rill.Stores.EfCore.csproj" />
     <ProjectReference Include="..\..\main\Rill.Stores.InMemory\Rill.Stores.InMemory.csproj" />
     <ProjectReference Include="..\..\main\Rill\Rill.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\rill-appsettings.local.json" Condition="Exists('..\..\rill-appsettings.local.json')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
   </ItemGroup>
 
 </Project>

@@ -24,6 +24,14 @@ namespace UnitTests
         }
 
         [Fact]
+        public void Can_be_reconstructed_from_guid_string()
+        {
+            var org = Guid.NewGuid();
+
+            (EventId.From(org.ToString()) == org).Should().BeTrue();
+        }
+
+        [Fact]
         public void Can_not_be_created_from_an_empty_guid()
         {
             Action a = () => EventId.From(Guid.Empty);

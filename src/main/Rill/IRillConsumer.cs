@@ -1,18 +1,16 @@
-﻿using System;
-
-namespace Rill
+﻿namespace Rill
 {
     /// <summary>
     /// Defines a consumer which can consume events from a <see cref="IRillConsumable{T}"/> implementation.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public interface IRillConsumer<T>
+    public interface IRillConsumer<in T>
     {
         /// <summary>
         /// Invoked when the Rill gets a new event.
         /// </summary>
-        /// <param name="ev"></param>
-        void OnNew(Event<T> ev);
+        /// <param name="value"></param>
+        void OnNew(T value);
 
         /// <summary>
         /// Invoked when the event has been dispatched and handled
@@ -26,11 +24,5 @@ namespace Rill
         /// </summary>
         /// <param name="eventId"></param>
         void OnAnyFailed(EventId eventId);
-
-        /// <summary>
-        /// Invoked when the Rill signals it has completed and no more
-        /// events will be emitted.
-        /// </summary>
-        void OnCompleted();
     }
 }

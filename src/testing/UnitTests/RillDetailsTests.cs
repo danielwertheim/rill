@@ -5,20 +5,20 @@ using Xunit;
 
 namespace UnitTests
 {
-    public class RillHeaderTests
+    public class RillDetailsTests
     {
         [Fact]
         public void New_uses_sensible_defaults()
         {
             var reference = RillReference.New("test");
 
-            var header = RillHeader.New(reference);
+            var header = RillDetails.New(reference);
 
             header.Reference.Should().Be(reference);
             header.Sequence.Should().Be(Sequence.None);
             header.LastChangedAt.Should().Be(header.CreatedAt);
-            ((DateTime)header.CreatedAt).Should().BeCloseTo(DateTime.UtcNow);
-            ((DateTime)header.LastChangedAt).Should().BeCloseTo(DateTime.UtcNow);
+            ((DateTime)header.CreatedAt).Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(500));
+            ((DateTime)header.LastChangedAt).Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(500));
         }
 
         [Fact]
@@ -26,7 +26,7 @@ namespace UnitTests
         {
             var ts = DateTime.UtcNow;
 
-            Action failing = () => RillHeader.From(
+            Action failing = () => RillDetails.From(
                 RillReference.New("test"),
                 Sequence.First,
                 Timestamp.From(ts),

@@ -4,14 +4,12 @@ namespace Rill
 {
     public sealed class RillReference : IEquatable<RillReference>
     {
-        private readonly string _name;
-        private readonly Guid _id;
         private readonly int _hashCode;
 
-        public string Name => _name;
-        public Guid Id => _id;
+        public string Name { get; }
+        public Guid Id { get; }
 
-        private static int GenerateHashCode(Guid id, string name)
+        private static int GenerateHashCode(string name, Guid id)
         {
             var hashCode = new HashCode();
 
@@ -23,9 +21,9 @@ namespace Rill
 
         private RillReference(string name, Guid id)
         {
-            _name = name;
-            _id = id;
-            _hashCode = GenerateHashCode(id, name);
+            Name = name;
+            Id = id;
+            _hashCode = GenerateHashCode(name, id);
         }
 
         public static RillReference From(string name, Guid id)
@@ -39,14 +37,14 @@ namespace Rill
             return new RillReference(name, id);
         }
 
-        private static bool IdEquals(RillReference left, RillReference right)
-            => left._id.Equals(right._id);
-
-        private static bool NameEquals(RillReference left, RillReference right)
-            => string.Equals(left._name, right._name, StringComparison.OrdinalIgnoreCase);
-
         public static RillReference New(string name)
             => From(name, Guid.NewGuid());
+
+        private static bool IdEquals(RillReference left, RillReference right)
+            => left.Id.Equals(right.Id);
+
+        private static bool NameEquals(RillReference left, RillReference right)
+            => string.Equals(left.Name, right.Name, StringComparison.OrdinalIgnoreCase);
 
         public static bool operator ==(RillReference left, RillReference right)
             => IdEquals(left, right) && NameEquals(left, right);
@@ -68,6 +66,6 @@ namespace Rill
             => _hashCode;
 
         public override string ToString()
-            => $"{_name}:{_id:N}";
+            => $"{Name}:{Id:N}";
     }
 }

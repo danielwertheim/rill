@@ -5,15 +5,13 @@
 
 `/rɪl/` - noun: *rill*; plural noun: *rills*; **a small stream.** which in this repo translates to: A `Rill` is a "small" stream of events.
 
-`Rill` is inspired by observables but uses the concept of `Consumable` and `Consumer` and adds more members to the `Consumer`, allowing you to get a more fine grained interaction between them.
+## `IAsyncRill` vs `IRill`
+There are two main tracks of an `Rill`: Asynchronous Rill (`IAsyncRill`) and Synchronous Rill (`IRill`).
 
-## `IAsyncRill<T>` vs `IRill<T>`
-There are two main tracks of an `Rill`: Asynchronous Rill (`IAsyncRill<T>`) and Synchronous Rill (`IRill<T>`).
+You create them via `RillFactory.Asynchronous()` and `RillFactory.Synchronous()`. The former uses consumers that has asynchronous members, while the later uses consumers with synchronous members.
 
-You create them via `RillFactory.Asynchronous<T>()` and `RillFactory.Synchronous<T>()`. The former uses consumers that has asynchronous members, while the later uses consumers with synchronous members.
-
-### `IRillCommit<T>` & `IRillStore<T>`
-A commit defines the result of a persisted sequential batch of events against an `IRillStore<T>`. A Rill accepts sequential emits of events so the sequencing is used as an optimistic concurrency check.
+### `IRillCommit` & `IRillStore`
+A commit defines the result of a persisted sequential batch of events against an `IRillStore`. A Rill accepts **sequential** emits of events so the sequencing is used as an optimistic concurrency check.
 
 ```
 [Rill:Sequence]
@@ -32,43 +30,35 @@ Commit:2 { R:3 |->| R:4}
 In order to react on events in a consumable `Rill`, you have to subscribe one or more consumers. This is done via:
 
 ```csharp
-//Exposes the Rill as a stream of T.
-rill.Consume.Subscribe(...)
-```
-
-```csharp
-//ConsumeAny: Exposes the Rill as a stream of anything.
-rill.ConsumeAny.Subscribe(...)
+rill.Subscribe(...)
 ```
 
 ## Unsubscribe
 The `Subscribe` member returns an `IDisposable`. If you invoke `Dispose` the consumer will be disposed and removed from the consumable's list of subscribed consumers and no further interaction will take place.
 
 ## Emit
-When emitting an event via `IAsyncRill<T>.EmitAsync(...)` or `IRill<T>.Emit(...)`, the event will reach each consumer as an `Event<T>`.
+When emitting an event via `IAsyncRill.EmitAsync(...)` or `IRill.Emit(...)`, the event will reach each consumer as an `Event<T>`.
 
 The Consumable Rill will invoke the following members on each subscribed consumer:
 
-`IAsyncRill<T>`:
+`IAsyncRill`:
 - `OnNewAsync(Event<T>)`: **Required** Invoked each time a new event gets emitted.
 - `OnAllSucceededAsync(EventId)`: **Optional** Invoked when the event has been successfully dispatched (no event has occurred) to ALL consumers.
 - `OnAnyFailedAsync(EventId)`: **Optional** Invoked if the event causes ANY observer to throw an Exception.
-- `OnCompletedAsync()`: **Optional** Invoked when the Rill is marked as completed.
 
-`IRill<T>`:
+`IRill`:
 - `OnNew(Event<T>)`: **Required** Invoked each time a new event gets emitted.
 - `OnAllSucceeded(EventId)`: **Optional** Invoked when the event has been successfully dispatched (no event has occurred) to ALL consumers.
 - `OnAnyFailed(EventId)`: **Optional** Invoked if the event causes ANY observer to throw an Exception.
-- `OnCompleted()`: **Optional** Invoked when the Rill is marked as completed.
 
 ## `Event<T>` is just an envelope
-`Rill` does NOT enforce any constraints on your events. This is entirely up to the application/domain that uses `Rill`. Instead, all events are wrapped and decorated with data useful to represent the event occurrence in `Rill`. The envelope adds e.g: `EventId` and `EventSequence`.
+`Rill` wraps your application event in an envelope which is decorated with data useful to represent the event occurrence in `Rill`. The envelope adds e.g: `Id`, `Sequence` and `Timestamp`.
 
 ## Delegating Consumers
 Instead of working with an actual implementation of `IAsyncRillConsumer<T>` or `IRillConsumer<T>` you can use a "delegating consumer". You can use it by subscribing using `Action` and `Func` members via `Subscribe(...)` which requires import of the `Rill.Extensions` namespace.
 
 ```csharp
-rill.Consume.Subscribe(ev => {...});
+rill.Subscribe(ev => {...});
 ```
 
 There are some optional members:
@@ -77,18 +67,16 @@ There are some optional members:
 rill.Consume.Subscribe(
     onNew: ev => {...},
     onSuceeded: id => {...},   //optional
-    onFailed: id => {...},     //optional
-    onCompleted: () => {...}); //optional
+    onFailed: id => {...}); //optional
 ```
 
-You can also create them via `ConsumerFactory`, e.g:
+You can also create them via the `ConsumerFactory`, e.g:
 
 ```csharp
 var consumer = ConsumerFactory.AsynchronousConsumer(
     onNew: ev => {...},
     onSuceeded: id => {...},   //optional
-    onFailed: id => {...},     //optional
-    onCompleted: () => {...}); //optional
+    onFailed: id => {...}); //optional
 
 rill.Consume.Subscribe(consumer);
 ```
@@ -98,20 +86,11 @@ There are some extensions (`Rill.Extensions`) that you can use to customize your
 
 ```csharp
 rill.Consume
-  .OfEventType<IAppEvent, IOrderEvent>()
+  .When<OrderPlaced>()
   .Where(ev => ev.Sequenece > EventSequence.Create(10))
-  .Where(evContent => evContent.OrderNumber == "42")
-  .Select(ev|evContent => new SomeOtherThing(...))
-  .Subscribe(ev => {...})
-```
-
-```csharp
-rill.ConsumeAny
-  .OfEventType<IOrderEvent>()
-  .Where(ev => ev.Sequenece > EventSequence.Create(10))
-  .Where(evContent => evContent.OrderNumber == "42")
-  .Select(ev|evContent => new SomeOtherThing(...))
-  .Subscribe(ev => {...})
+  .Where(ev => ev.Content.OrderNumber == "42")
+  .Select(ev => new SomeOtherThing(...))
+  .Subscribe(someOtherThing => {...});
 ```
 
 ## Sample
@@ -123,7 +102,6 @@ using System.Threading.Tasks;
 using ConsoleSample.Events;
 using ConsoleSample.Views;
 using Rill;
-using Rill.Extensions;
 using Rill.Stores.InMemory;
 
 namespace ConsoleSample
@@ -132,27 +110,28 @@ namespace ConsoleSample
     {
         public static async Task Main()
         {
-            //A Rill store is used to persist and read events
-            var orderStore = new InMemoryRillStore<IOrderEvent>();
+            var orderStore = new InMemoryRillStore();
 
-            //A Reference identifies a certain Rill, via its name and id
             var rillReference = RillReference.New("order");
 
             await PlaceAndApproveOrderAsync(orderStore, rillReference);
 
             await ShipOrderAsync(orderStore, rillReference);
+
+            Console.WriteLine("**************************");
+            Console.WriteLine("All commits:");
+            Console.WriteLine("**************************");
+            await foreach (var commit in orderStore.ReadCommitsAsync(rillReference))
+                Console.WriteLine(commit);
+            Console.WriteLine("**************************");
         }
 
-        private static async Task PlaceAndApproveOrderAsync(IRillStore<IOrderEvent> orderStore, RillReference reference)
+        private static async Task PlaceAndApproveOrderAsync(IRillStore orderStore, RillReference reference)
         {
-            using var rill = RillFactory.Synchronous<IOrderEvent>(reference);
+            using var rill = RillFactory.Synchronous(reference);
 
-            //Order view is e.g. an application specific implementation.
-            //In this case, a simple aggregation of an order view.
             var view = new OrderView(rill);
 
-            //A transaction monitors the events dispatched on a Rill
-            //and is used to commit batches of events to a store.
             using var transaction = RillTransaction.Begin(rill);
 
             rill.Emit(new OrderPlaced(
@@ -168,17 +147,17 @@ namespace ConsoleSample
             view.Dump("After OrderApproved");
 
             var commit = await transaction.CommitAsync(orderStore);
-            Console.WriteLine($"Committed {commit.Id}@{commit.SequenceRange}");
+            Console.WriteLine($"Committed {commit}");
         }
 
-        private static async Task ShipOrderAsync(IRillStore<IOrderEvent> orderStore, RillReference reference)
+        private static async Task ShipOrderAsync(IRillStore orderStore, RillReference reference)
         {
-            using var rill = RillFactory.Synchronous<IOrderEvent>(reference);
+            using var rill = RillFactory.Synchronous(reference);
 
             var view = new OrderView(rill);
 
-            foreach (var ev in orderStore.ReadEvents(reference))
-                rill.Emit(ev);
+            foreach (var c in orderStore.ReadCommits(reference))
+                rill.Emit(c);
 
             using var transaction = RillTransaction.Begin(rill);
 
@@ -187,51 +166,60 @@ namespace ConsoleSample
             view.Dump("After OrderShipped");
 
             var commit = await transaction.CommitAsync(orderStore);
-            Console.WriteLine($"Committed {commit.Id}@{commit.SequenceRange}");
+            Console.WriteLine($"Committed {commit}");
         }
     }
 }
+
 ```
 
 The `OrderView` in the sample is just a simple aggregation representing an order:
 
 ```csharp
-public class OrderView
+using System;
+using ConsoleSample.Events;
+using Rill;
+using Rill.Extensions;
+
+namespace ConsoleSample.Views
 {
-    public RillReference Reference { get; }
-
-    public string? OrderNumber { get; private set; }
-    public string? CustomerRef { get; private set; }
-    public decimal? Amount { get; private set; }
-    public DateTime? PlacedAt { get; private set; }
-    public DateTime? ApprovedAt { get; private set; }
-    public DateTime? ShippedAt { get; private set; }
-
-    public OrderView(IRill<IOrderEvent> rill)
+    public class OrderView
     {
-        Reference = rill.Reference;
-        rill.OfOrderEvent<OrderPlaced>().Subscribe(ev =>
+        public RillReference Reference { get; }
+
+        public string? OrderNumber { get; private set; }
+        public string? CustomerRef { get; private set; }
+        public decimal? Amount { get; private set; }
+        public DateTime? PlacedAt { get; private set; }
+        public DateTime? ApprovedAt { get; private set; }
+        public DateTime? ShippedAt { get; private set; }
+
+        public OrderView(IRill rill)
         {
-            OrderNumber = ev.Content.OrderNumber;
-            PlacedAt = ev.Content.PlacedAt;
-            CustomerRef = ev.Content.CustomerRef;
-            Amount = ev.Content.Amount;
-        });
-        rill.OfOrderEvent<OrderApproved>().Subscribe(
-            ev => ApprovedAt = ev.Content.ApprovedAt);
-        rill.OfOrderEvent<OrderShipped>().Subscribe(
-            ev => ShippedAt = ev.Content.ShippedAt);
+            Reference = rill.Reference;
+
+            rill.Where<OrderPlaced>(ev => ev.Content.Amount > 1).Select(ev => ev.Content.Amount).Subscribe(amount => { });
+            rill.When<OrderPlaced>().Where(ev => ev.Content.Amount > 1).Select(ev => ev.Content.Amount).Subscribe(amount => { });
+
+            rill.When<OrderPlaced>().Subscribe(ev =>
+            {
+                OrderNumber = ev.Content.OrderNumber;
+                PlacedAt = ev.Content.PlacedAt;
+                CustomerRef = ev.Content.CustomerRef;
+                Amount = ev.Content.Amount;
+            });
+            rill.When<OrderApproved>().Subscribe(ev => ApprovedAt = ev.Content.ApprovedAt);
+            rill.When<OrderShipped>().Subscribe(ev => ShippedAt = ev.Content.ShippedAt);
+        }
     }
 }
 ```
 
-To simplify the order event filtering above, you could do a simple extension method:
+## Development
+Run
 
-```csharp
-internal static class OrderRillExtensions
-{
-    internal static IRillConsumable<T> OfOrderEvent<T>(
-        this IRill<IOrderEvent> rill) where T : IOrderEvent
-        => rill.Consume.OfEventType<IOrderEvent, T>();
-}
+```bash
+$ . init-local-env.sh
 ```
+
+and edit the `.env` file and `src/rill-appsettings.local.json` file. After that you can use `docker-compose up` to spin up resources like e.g. SQL-Server.

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace Rill.Operators
 {
     internal sealed class AsyncCatchOp<T, TException> : IAsyncRillConsumable<T>
-        where T : class
+        // where T : class
         where TException : Exception
     {
         private readonly IAsyncRillConsumable<T> _src;
@@ -33,11 +33,11 @@ namespace Rill.Operators
                 _handler = handler;
             }
 
-            public async ValueTask OnNewAsync(Event<T> ev)
+            public async ValueTask OnNewAsync(T value)
             {
                 try
                 {
-                    await _consumer.OnNewAsync(ev).ConfigureAwait(false);
+                    await _consumer.OnNewAsync(value).ConfigureAwait(false);
                 }
                 catch (TException ex)
                 {
@@ -50,9 +50,6 @@ namespace Rill.Operators
 
             public ValueTask OnAnyFailedAsync(EventId eventId)
                 => _consumer.OnAnyFailedAsync(eventId);
-
-            public ValueTask OnCompletedAsync()
-                => _consumer.OnCompletedAsync();
         }
     }
 }

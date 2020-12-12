@@ -13,6 +13,7 @@
 *.cache
 
 # config
+.env
 *.local
 *.local.json
 

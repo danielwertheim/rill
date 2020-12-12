@@ -8,7 +8,7 @@ namespace Rill
     /// </summary>
     /// <param name="ev"></param>
     /// <typeparam name="T"></typeparam>
-    public delegate ValueTask AsyncNewEventHandler<T>(Event<T> ev);
+    public delegate ValueTask AsyncNewEventHandler<in T>(T ev);
     /// <summary>
     /// Handler used to handle the notification of a successful event dispatch in an async consumer.
     /// </summary>
@@ -25,7 +25,7 @@ namespace Rill
     /// </summary>
     /// <param name="ev"></param>
     /// <typeparam name="T"></typeparam>
-    public delegate void NewEventHandler<T>(Event<T> ev);
+    public delegate void NewEventHandler<in T>(T ev);
     /// <summary>
     /// /// Handler used to handle the notification of a successful event dispatch in a consumer.
     /// </summary>

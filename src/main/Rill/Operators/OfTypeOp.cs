@@ -2,24 +2,26 @@ using System;
 
 namespace Rill.Operators
 {
-    internal sealed class OfTypeOp<TSrc, TResult> : IRillConsumable<TResult>
+    internal sealed class OfTypeOp<TSrc, TResult> : IRillConsumable<Event<TResult>>
+        where TSrc : class
+        where TResult : class
     {
-        private readonly IRillConsumable<TSrc> _src;
+        private readonly IRillConsumable<Event<TSrc>> _src;
 
-        public OfTypeOp(IRillConsumable<TSrc> src)
+        public OfTypeOp(IRillConsumable<Event<TSrc>> src)
             => _src = src;
 
         public void Dispose()
             => _src.Dispose();
 
-        public IDisposable Subscribe(IRillConsumer<TResult> consumer)
+        public IDisposable Subscribe(IRillConsumer<Event<TResult>> consumer)
             => _src.Subscribe(new OfTypeConsumer(consumer));
 
-        private sealed class OfTypeConsumer : IRillConsumer<TSrc>
+        private sealed class OfTypeConsumer : IRillConsumer<Event<TSrc>>
         {
-            private readonly IRillConsumer<TResult> _consumer;
+            private readonly IRillConsumer<Event<TResult>> _consumer;
 
-            public OfTypeConsumer(IRillConsumer<TResult> consumer)
+            public OfTypeConsumer(IRillConsumer<Event<TResult>> consumer)
                 => _consumer = consumer;
 
             public void OnNew(Event<TSrc> ev)
@@ -33,9 +35,6 @@ namespace Rill.Operators
 
             public void OnAnyFailed(EventId eventId)
                 => _consumer.OnAnyFailed(eventId);
-
-            public void OnCompleted()
-                => _consumer.OnCompleted();
         }
     }
 }

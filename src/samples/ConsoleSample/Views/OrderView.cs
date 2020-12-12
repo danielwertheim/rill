@@ -5,12 +5,6 @@ using Rill.Extensions;
 
 namespace ConsoleSample.Views
 {
-    internal static class OrderRillExtensions
-    {
-        internal static IRillConsumable<T> OfOrderEvent<T>(this IRill<IOrderEvent> rill) where T : IOrderEvent
-            => rill.Consume.OfEventType<IOrderEvent, T>();
-    }
-
     public class OrderView
     {
         public RillReference Reference { get; }
@@ -22,58 +16,34 @@ namespace ConsoleSample.Views
         public DateTime? ApprovedAt { get; private set; }
         public DateTime? ShippedAt { get; private set; }
 
-        public OrderView(IRill<IOrderEvent> rill)
+        public OrderView(IRill rill)
         {
             Reference = rill.Reference;
 
-            //ALTERNATIVE (A)
+            rill.Where<OrderPlaced>(ev => ev.Content.Amount > 1).Select(ev => ev.Content.Amount).Subscribe(amount => { });
+            rill.When<OrderPlaced>().Where(ev => ev.Content.Amount > 1).Select(ev => ev.Content.Amount).Subscribe(amount => { });
 
-            // rill.Consume.OfEventType<IOrderEvent, OrderPlaced>().Subscribe(ev =>
-            // {
-            //     OrderNumber = ev.Content.OrderNumber;
-            //     PlacedAt = ev.Content.PlacedAt;
-            //     CustomerRef = ev.Content.CustomerRef;
-            //     Amount = ev.Content.Amount;
-            // });
-            // rill.Consume.OfEventType<IOrderEvent, OrderApproved>().Subscribe(ev => ApprovedAt = ev.Content.ApprovedAt);
-            // rill.Consume.OfEventType<IOrderEvent, OrderShipped>().Subscribe(ev => ShippedAt = ev.Content.ShippedAt);
-
-
-            //ALTERNATIVE (B)
-
-            // rill.ConsumeAny.OfEventType<OrderPlaced>().Subscribe(ev =>
-            // {
-            //     OrderNumber = ev.Content.OrderNumber;
-            //     PlacedAt = ev.Content.PlacedAt;
-            //     CustomerRef = ev.Content.CustomerRef;
-            //     Amount = ev.Content.Amount;
-            // });
-            // rill.ConsumeAny.OfEventType<OrderApproved>().Subscribe(ev => ApprovedAt = ev.Content.ApprovedAt);
-            // rill.ConsumeAny.OfEventType<OrderShipped>().Subscribe(ev => ShippedAt = ev.Content.ShippedAt);
-
-
-            //SIMPLIFIED VIA CUSTOM EXTENSION METHOD
-
-            rill.OfOrderEvent<OrderPlaced>().Subscribe(ev =>
+            rill.When<OrderPlaced>().Subscribe(ev =>
             {
                 OrderNumber = ev.Content.OrderNumber;
                 PlacedAt = ev.Content.PlacedAt;
                 CustomerRef = ev.Content.CustomerRef;
                 Amount = ev.Content.Amount;
             });
-            rill.OfOrderEvent<OrderApproved>().Subscribe(ev => ApprovedAt = ev.Content.ApprovedAt);
-            rill.OfOrderEvent<OrderShipped>().Subscribe(ev => ShippedAt = ev.Content.ShippedAt);
+            rill.When<OrderApproved>().Subscribe(ev => ApprovedAt = ev.Content.ApprovedAt);
+            rill.When<OrderShipped>().Subscribe(ev => ShippedAt = ev.Content.ShippedAt);
         }
     }
 
     internal static class OrderViewExtensions
     {
-        private static readonly object Sync = new object();
+        private static readonly object Sync = new();
 
         internal static void Dump(this OrderView view, string title)
         {
             lock (Sync)
             {
+                Console.WriteLine("**************************");
                 Console.WriteLine(title);
                 Console.WriteLine("**************************");
                 Console.WriteLine($"Ref: {view.Reference}");
@@ -84,6 +54,7 @@ namespace ConsoleSample.Views
                 Console.WriteLine($"ApprovedAt: {view.ApprovedAt}");
                 Console.WriteLine($"ShippedAt: {view.ShippedAt}");
                 Console.WriteLine("**************************");
+                Console.WriteLine();
             }
         }
     }

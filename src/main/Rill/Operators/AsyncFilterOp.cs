@@ -3,12 +3,13 @@ using System.Threading.Tasks;
 
 namespace Rill.Operators
 {
-    internal sealed class AsyncFilterOp<T> : IAsyncRillConsumable<T>
+    internal sealed class AsyncFilterOp<T> : IAsyncRillConsumable<Event<T>>
+        where T : class
     {
-        private readonly IAsyncRillConsumable<T> _src;
+        private readonly IAsyncRillConsumable<Event<T>> _src;
         private readonly Func<Event<T>, bool> _predicate;
 
-        public AsyncFilterOp(IAsyncRillConsumable<T> src, Func<Event<T>, bool> predicate)
+        public AsyncFilterOp(IAsyncRillConsumable<Event<T>> src, Func<Event<T>, bool> predicate)
         {
             _src = src;
             _predicate = predicate;
@@ -16,15 +17,15 @@ namespace Rill.Operators
 
         public void Dispose() => _src.Dispose();
 
-        public IDisposable Subscribe(IAsyncRillConsumer<T> consumer)
+        public IDisposable Subscribe(IAsyncRillConsumer<Event<T>> consumer)
             => _src.Subscribe(new AsyncFilteringConsumer(consumer, _predicate));
 
-        private sealed class AsyncFilteringConsumer : IAsyncRillConsumer<T>
+        private sealed class AsyncFilteringConsumer : IAsyncRillConsumer<Event<T>>
         {
-            private readonly IAsyncRillConsumer<T> _consumer;
+            private readonly IAsyncRillConsumer<Event<T>> _consumer;
             private readonly Func<Event<T>, bool> _predicate;
 
-            public AsyncFilteringConsumer(IAsyncRillConsumer<T> consumer, Func<Event<T>, bool> predicate)
+            public AsyncFilteringConsumer(IAsyncRillConsumer<Event<T>> consumer, Func<Event<T>, bool> predicate)
             {
                 _consumer = consumer;
                 _predicate = predicate;
@@ -41,9 +42,6 @@ namespace Rill.Operators
 
             public ValueTask OnAnyFailedAsync(EventId eventId)
                 => _consumer.OnAnyFailedAsync(eventId);
-
-            public ValueTask OnCompletedAsync()
-                => _consumer.OnCompletedAsync();
         }
     }
 }

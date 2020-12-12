@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <PackageId>Rill.Stores.InMemory</PackageId>
+    <PackageTags>rill streams events storage</PackageTags>
+    <Description>A Rill is a "small" stream of events. This projects handles storage of Rills using Entity Framework.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.3" />
+    <PackageReference Include="System.Text.Json" Version="5.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Rill\Rill.csproj" />
+  </ItemGroup>
+</Project>

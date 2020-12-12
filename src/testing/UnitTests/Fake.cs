@@ -4,15 +4,25 @@ using Rill;
 
 namespace UnitTests
 {
+    internal class Dummy
+    {
+        internal string Value { get; }
+
+        public Dummy(string value)
+        {
+            Value = value;
+        }
+    }
+
     internal static class Fake
     {
         internal static class Events
         {
-            internal static Event<string> Single(int sequenceSeed = 0)
-                => Event<string>.Create(Fake.Strings.Random(), EventId.New(), sequenceSeed == 0 ? Sequence.First : Sequence.First.Add(sequenceSeed));
+            internal static Event Single(EventId? id = null, int sequenceSeed = 0)
+                => Event.New(Strings.Random(), id ?? EventId.New(), sequenceSeed == 0 ? Sequence.First : Sequence.First.Add(sequenceSeed));
 
-            internal static Event<string>[] Many(int sequenceSeed = 0, int n = 3)
-                => Enumerable.Range(sequenceSeed, n).Select(Single).ToArray();
+            internal static Event[] Many(int sequenceSeed = 0, int n = 3)
+                => Enumerable.Range(sequenceSeed, n).Select(i => Single(sequenceSeed: i)).ToArray();
         }
 
         internal static class Strings

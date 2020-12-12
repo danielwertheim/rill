@@ -7,17 +7,11 @@ using Rill.Extensions;
 
 namespace Rill
 {
-    public static class RillTransaction
-    {
-        public static IRillTransaction<T> Begin<T>(IRill<T> rill)
-            => RillTransaction<T>.Begin(rill);
-    }
-
-    internal sealed class RillTransaction<T> : IRillTransaction<T>
+    public sealed class RillTransaction : IRillTransaction
     {
         private readonly SemaphoreSlim _sync;
-        private readonly IRill<T> _rill;
-        private readonly ConcurrentQueue<Event<T>> _stage;
+        private readonly IRill _rill;
+        private readonly ConcurrentQueue<Event> _stage;
         private IDisposable? _rillSubscription;
         private bool _isDisposed;
         private long _ackCount;
@@ -28,7 +22,7 @@ namespace Rill
             if (_rillSubscription != null)
                 throw new InvalidOperationException("Can not subscribe while there is an active subscription.");
 
-            return _rill.Consume.Subscribe(
+            return _rill.Subscribe(
                 ev => _stage.Enqueue(ev),
                 successfulId => { _ackCount = Interlocked.Increment(ref _ackCount); },
                 failedId =>
@@ -40,16 +34,16 @@ namespace Rill
                 });
         }
 
-        private RillTransaction(IRill<T> rill)
+        private RillTransaction(IRill rill)
         {
             _sync = new SemaphoreSlim(1, 1);
             _rill = rill;
-            _stage = new ConcurrentQueue<Event<T>>();
+            _stage = new ConcurrentQueue<Event>();
             _rillSubscription = Subscribe();
         }
 
-        internal static IRillTransaction<T> Begin(IRill<T> rill)
-            => new RillTransaction<T>(rill);
+        public static IRillTransaction Begin(IRill rill)
+            => new RillTransaction(rill);
 
         public void Dispose()
         {
@@ -72,7 +66,7 @@ namespace Rill
             => _ackCount + _nackCount == _stage.Count ||
                SpinWait.SpinUntil(() => _ackCount + _nackCount == _stage.Count, interval);
 
-        public async Task<IRillCommit<T>> CommitAsync(IRillStore<T> store, CancellationToken cancellationToken = default)
+        public async Task<RillCommit> CommitAsync(IRillStore store, CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
 

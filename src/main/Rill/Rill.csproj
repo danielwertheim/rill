@@ -3,6 +3,6 @@
     <TargetFramework>net5.0</TargetFramework>
     <PackageId>Rill</PackageId>
     <PackageTags>rill streams events</PackageTags>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Description>A Rill is a "small" stream of events. Rill is inspired by observables but uses the concept of Consumables and Consumers and adds more members to the Consumer, allowing you to get a more fine grained interaction between them.</Description>
   </PropertyGroup>
 </Project>

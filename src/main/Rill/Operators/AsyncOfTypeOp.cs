@@ -3,24 +3,26 @@ using System.Threading.Tasks;
 
 namespace Rill.Operators
 {
-    internal sealed class AsyncOfTypeOp<TSrc, TResult> : IAsyncRillConsumable<TResult>
+    internal sealed class AsyncOfTypeOp<TSrc, TResult> : IAsyncRillConsumable<Event<TResult>>
+        where TSrc : class
+        where TResult : class
     {
-        private readonly IAsyncRillConsumable<TSrc> _src;
+        private readonly IAsyncRillConsumable<Event<TSrc>> _src;
 
-        public AsyncOfTypeOp(IAsyncRillConsumable<TSrc> src)
+        public AsyncOfTypeOp(IAsyncRillConsumable<Event<TSrc>> src)
             => _src = src;
 
         public void Dispose()
             => _src.Dispose();
 
-        public IDisposable Subscribe(IAsyncRillConsumer<TResult> consumer)
+        public IDisposable Subscribe(IAsyncRillConsumer<Event<TResult>> consumer)
             => _src.Subscribe(new AsyncOfTypeConsumer(consumer));
 
-        private sealed class AsyncOfTypeConsumer : IAsyncRillConsumer<TSrc>
+        private sealed class AsyncOfTypeConsumer : IAsyncRillConsumer<Event<TSrc>>
         {
-            private readonly IAsyncRillConsumer<TResult> _consumer;
+            private readonly IAsyncRillConsumer<Event<TResult>> _consumer;
 
-            public AsyncOfTypeConsumer(IAsyncRillConsumer<TResult> consumer)
+            public AsyncOfTypeConsumer(IAsyncRillConsumer<Event<TResult>> consumer)
                 => _consumer = consumer;
 
             public async ValueTask OnNewAsync(Event<TSrc> ev)
@@ -34,9 +36,6 @@ namespace Rill.Operators
 
             public ValueTask OnAnyFailedAsync(EventId eventId)
                 => _consumer.OnAnyFailedAsync(eventId);
-
-            public ValueTask OnCompletedAsync()
-                => _consumer.OnCompletedAsync();
         }
     }
 }

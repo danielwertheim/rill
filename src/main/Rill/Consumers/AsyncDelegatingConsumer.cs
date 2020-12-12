@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Rill.Consumers
 {
@@ -8,30 +7,24 @@ namespace Rill.Consumers
         private readonly AsyncNewEventHandler<T> _onNew;
         private readonly AsyncSuccessfulEventHandler? _onAllSucceeded;
         private readonly AsyncFailedEventHandler? _onAnyFailed;
-        private readonly Func<ValueTask>? _onCompleted;
 
         internal AsyncDelegatingConsumer(
             AsyncNewEventHandler<T> onNew,
             AsyncSuccessfulEventHandler? onAllSucceeded = null,
-            AsyncFailedEventHandler? onAnyFailed = null,
-            Func<ValueTask>? onCompleted = null)
+            AsyncFailedEventHandler? onAnyFailed = null)
         {
             _onNew = onNew;
             _onAllSucceeded = onAllSucceeded;
             _onAnyFailed = onAnyFailed;
-            _onCompleted = onCompleted;
         }
 
-        public ValueTask OnNewAsync(Event<T> ev)
-            => _onNew(ev);
+        public ValueTask OnNewAsync(T value)
+            => _onNew(value);
 
         public ValueTask OnAllSucceededAsync(EventId eventId)
             => _onAllSucceeded?.Invoke(eventId) ?? ValueTask.CompletedTask;
 
         public ValueTask OnAnyFailedAsync(EventId eventId)
             => _onAnyFailed?.Invoke(eventId) ?? ValueTask.CompletedTask;
-
-        public ValueTask OnCompletedAsync()
-            => _onCompleted?.Invoke() ?? ValueTask.CompletedTask;
     }
 }

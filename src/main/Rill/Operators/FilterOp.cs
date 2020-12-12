@@ -2,12 +2,13 @@
 
 namespace Rill.Operators
 {
-    internal sealed class FilterOp<T> : IRillConsumable<T>
+    internal sealed class FilterOp<T> : IRillConsumable<Event<T>>
+        where T : class
     {
-        private readonly IRillConsumable<T> _src;
+        private readonly IRillConsumable<Event<T>> _src;
         private readonly Func<Event<T>, bool> _predicate;
 
-        public FilterOp(IRillConsumable<T> src, Func<Event<T>, bool> predicate)
+        public FilterOp(IRillConsumable<Event<T>> src, Func<Event<T>, bool> predicate)
         {
             _src = src;
             _predicate = predicate;
@@ -15,15 +16,15 @@ namespace Rill.Operators
 
         public void Dispose() => _src.Dispose();
 
-        public IDisposable Subscribe(IRillConsumer<T> consumer)
+        public IDisposable Subscribe(IRillConsumer<Event<T>> consumer)
             => _src.Subscribe(new FilteringConsumer(consumer, _predicate));
 
-        private sealed class FilteringConsumer : IRillConsumer<T>
+        private sealed class FilteringConsumer : IRillConsumer<Event<T>>
         {
-            private readonly IRillConsumer<T> _consumer;
+            private readonly IRillConsumer<Event<T>> _consumer;
             private readonly Func<Event<T>, bool> _predicate;
 
-            public FilteringConsumer(IRillConsumer<T> consumer, Func<Event<T>, bool> predicate)
+            public FilteringConsumer(IRillConsumer<Event<T>> consumer, Func<Event<T>, bool> predicate)
             {
                 _consumer = consumer;
                 _predicate = predicate;
@@ -40,9 +41,6 @@ namespace Rill.Operators
 
             public void OnAnyFailed(EventId eventId)
                 => _consumer.OnAnyFailed(eventId);
-
-            public void OnCompleted()
-                => _consumer.OnCompleted();
         }
     }
 }

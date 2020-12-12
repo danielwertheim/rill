@@ -6,38 +6,44 @@ using System.Linq;
 
 namespace Rill
 {
-    public static class RillCommit
+    /// Defines a commit which represents a batch of events,
+    /// that was persisted together against an <see cref="IRillStore"/>.
+    public sealed class RillCommit : IEnumerable<Event>
     {
-        public static IRillCommit<T> New<T>(
-            RillReference reference,
-            IImmutableList<Event<T>> events) => RillCommit<T>.New(reference, events);
-
-        public static IRillCommit<T> From<T>(
-            CommitId id,
-            RillReference reference,
-            SequenceRange sequenceRange,
-            Timestamp timestamp,
-            IImmutableList<Event<T>> events) => RillCommit<T>.From(id, reference, sequenceRange, timestamp, events);
-    }
-
-    internal sealed class RillCommit<T> : IRillCommit<T>
-    {
+        /// <summary>
+        /// Gets the unique id for the commit.
+        /// </summary>
         public CommitId Id { get; }
+
+        /// <summary>
+        /// Gets the reference to the Rill that the commit
+        /// belongs to.
+        /// </summary>
         public RillReference Reference { get; }
+
+        /// <summary>
+        /// Gets the sequence range of the contained events.
+        /// From-inclusive - To-inclusive.
+        /// </summary>
         public SequenceRange SequenceRange { get; }
+
+        /// <summary>
+        /// Gets the timestamp for when the commit occured.
+        /// </summary>
         public Timestamp Timestamp { get; }
-        public IImmutableList<Event<T>> Events { get; }
+
+        /// <summary>
+        /// Gets the events associated with the commit.
+        /// </summary>
+        public IImmutableList<Event> Events { get; }
 
         private RillCommit(
-            CommitId id,
             RillReference reference,
+            CommitId id,
             SequenceRange sequenceRange,
             Timestamp timestamp,
-            IImmutableList<Event<T>> events)
+            IImmutableList<Event> events)
         {
-            if (!events.Any())
-                throw new ArgumentException("A commit must at least contain one event.", nameof(events));
-
             Id = id;
             Reference = reference;
             SequenceRange = sequenceRange;
@@ -45,7 +51,7 @@ namespace Rill
             Events = events;
         }
 
-        private static IImmutableList<Event<T>> RequireAtLeastOneEvent(IImmutableList<Event<T>> events)
+        private static IImmutableList<Event> RequireAtLeastOneEvent(IImmutableList<Event> events)
         {
             if (!events.Any())
                 throw new ArgumentException("A commit must at least contain one event.", nameof(events));
@@ -53,31 +59,31 @@ namespace Rill
             return events;
         }
 
-        internal static IRillCommit<T> From(
-            CommitId id,
+        public static RillCommit From(
             RillReference reference,
+            CommitId id,
             SequenceRange sequenceRange,
             Timestamp timestamp,
-            IImmutableList<Event<T>> events)
-        {
-            return new RillCommit<T>(id, reference, sequenceRange, timestamp, RequireAtLeastOneEvent(events));
-        }
+            IImmutableList<Event> events) => new(reference, id, sequenceRange, timestamp, RequireAtLeastOneEvent(events));
 
-        internal static IRillCommit<T> New(
+        public static RillCommit New(
             RillReference reference,
-            IImmutableList<Event<T>> events)
+            IImmutableList<Event> events)
         {
             events = RequireAtLeastOneEvent(events);
 
             var revision = SequenceRange.From(events[0].Sequence, events[^1].Sequence);
 
-            return From(CommitId.New(), reference, revision, Timestamp.New(), events);
+            return From(reference, CommitId.New(), revision, Timestamp.New(), events);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
-        public IEnumerator<Event<T>> GetEnumerator()
+        public IEnumerator<Event> GetEnumerator()
             => Events.GetEnumerator();
+
+        public override string ToString()
+            => $"{Reference}_{Id}_{SequenceRange}_{Timestamp}";
     }
 }

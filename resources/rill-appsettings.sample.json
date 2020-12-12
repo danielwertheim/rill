@@ -1,0 +1,5 @@
+{
+    "SqlServer": {
+        "Pass": "foo_bar"
+    }
+}

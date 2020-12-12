@@ -3,7 +3,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <PackageId>Rill.Stores.InMemory</PackageId>
     <PackageTags>rill streams events storage</PackageTags>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Description>A Rill is a "small" stream of events. This projects handles storage of Rills in-memory.</Description>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Rill\Rill.csproj" />

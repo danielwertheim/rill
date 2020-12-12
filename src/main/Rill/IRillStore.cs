@@ -4,14 +4,12 @@ using System.Threading.Tasks;
 
 namespace Rill
 {
-    public interface IRillStore<T>
+    public interface IRillStore
     {
-        Task<RillHeader?> GetHeaderAsync(RillReference reference, CancellationToken? cancellationToken = null);
-
-        Task DeleteAsync(RillReference reference, CancellationToken? cancellationToken = null);
-
-        IEnumerable<Event<T>> ReadEvents(RillReference reference, SequenceRange? revision = null);
-
-        Task AppendAsync(IRillCommit<T> commit, CancellationToken? cancellationToken = null);
+        Task<RillDetails?> GetDetailsAsync(RillReference reference, CancellationToken cancellationToken = default);
+        Task AppendAsync(RillCommit commit, CancellationToken cancellationToken = default);
+        Task DeleteAsync(RillReference reference, CancellationToken cancellationToken = default);
+        IEnumerable<RillCommit> ReadCommits(RillReference reference, SequenceRange? sequenceRange = default);
+        IAsyncEnumerable<RillCommit> ReadCommitsAsync(RillReference reference, SequenceRange? sequenceRange = default, CancellationToken cancellationToken = default);
     }
 }
