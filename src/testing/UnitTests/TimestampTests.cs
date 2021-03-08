@@ -12,7 +12,7 @@ namespace UnitTests
         {
             var dt = (DateTime) Timestamp.New();
 
-            dt.Should().BeCloseTo(DateTime.UtcNow);
+            dt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMilliseconds(500));
         }
 
         [Fact]

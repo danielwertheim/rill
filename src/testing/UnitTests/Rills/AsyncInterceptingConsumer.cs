@@ -6,20 +6,25 @@ namespace UnitTests.Rills
 {
     internal static class AsyncInterceptingConsumerExtensions
     {
-        internal static InterceptionsHas<T> Ensure<T>(this AsyncInterceptingConsumer<T> consumer)
-            => new InterceptionsHas<T>(consumer.Interceptions);
+        internal static InterceptionsHas Ensure<T>(this AsyncInterceptingConsumer<T> consumer)
+            where T : class
+            => new(consumer.Interceptions);
     }
 
-    internal class AsyncInterceptingConsumer<T> : IAsyncRillConsumer<T>
+    internal class AsyncInterceptingConsumer : AsyncInterceptingConsumer<object>{}
+
+    internal class AsyncInterceptingConsumer<T> : IAsyncRillConsumer<Event<T>>
+        where T : class
     {
-        public Interceptions<T> Interceptions { get; } = new Interceptions<T>();
+        public Interceptions Interceptions { get; } = new();
 
         public Action<Event<T>>? AfterOnNew { get; private set; }
 
-        private AsyncInterceptingConsumer() { }
+        protected AsyncInterceptingConsumer()
+        {
+        }
 
-        internal static AsyncInterceptingConsumer<T> Behaving()
-            => new AsyncInterceptingConsumer<T>();
+        internal static AsyncInterceptingConsumer<T> Behaving() => new();
 
         internal static AsyncInterceptingConsumer<T> Misbehaving(Func<Event<T>, bool>? failPredicate = null)
             => new AsyncInterceptingConsumer<T>().ConfigureAsMisbehaving(failPredicate);
@@ -28,7 +33,7 @@ namespace UnitTests.Rills
         {
             AfterOnNew = ev =>
             {
-                if(failPredicate == null || failPredicate(ev))
+                if (failPredicate == null || failPredicate(ev))
                     throw new Exception($"Intentionally failing. Event content: '{ev.Content}'.");
             };
 
@@ -37,7 +42,7 @@ namespace UnitTests.Rills
 
         public ValueTask OnNewAsync(Event<T> ev)
         {
-            Interceptions.InOnNew(ev);
+            Interceptions.InOnNew(ev.AsUntyped());
             AfterOnNew?.Invoke(ev);
 
             return ValueTask.CompletedTask;
@@ -56,21 +61,5 @@ namespace UnitTests.Rills
 
             return ValueTask.CompletedTask;
         }
-
-        public ValueTask OnCompletedAsync()
-        {
-            Interceptions.InOnCompleted();
-
-            return ValueTask.CompletedTask;
-        }
-    }
-
-    internal static class AsyncInterceptingConsumer
-    {
-        internal static AsyncInterceptingConsumer<string> Behaving()
-            => AsyncInterceptingConsumer<string>.Behaving();
-
-        internal static AsyncInterceptingConsumer<string> Misbehaving(Func<Event<string>, bool>? failPredicate = null)
-            => AsyncInterceptingConsumer<string>.Misbehaving(failPredicate);
     }
 }

@@ -4,8 +4,14 @@ using System.Threading.Tasks;
 
 namespace Rill
 {
-    public interface IRillTransaction<T> : IDisposable
+    public interface IRillTransaction : IDisposable
     {
-        Task<IRillCommit<T>> CommitAsync(IRillStore<T> store, CancellationToken cancellationToken = default);
+        /// <summary>
+        /// Commits the events produced during the lifetime of the transaction.
+        /// </summary>
+        /// <param name="store"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<RillCommit> CommitAsync(IRillStore store, CancellationToken cancellationToken = default);
     }
 }

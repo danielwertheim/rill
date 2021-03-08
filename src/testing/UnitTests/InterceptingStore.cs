@@ -7,27 +7,31 @@ using Rill;
 
 namespace UnitTests
 {
-    internal class InterceptingStore<T> : IRillStore<T>
+    internal class InterceptingStore : IRillStore
     {
-        private readonly List<IRillCommit<T>> _appends
-            = new List<IRillCommit<T>>();
+        private readonly List<RillCommit> _appends = new();
 
-        public Task<RillHeader?> GetHeaderAsync(RillReference reference, CancellationToken? cancellationToken = null)
+        public Task<RillDetails?> GetDetailsAsync(RillReference reference, CancellationToken cancellationToken = default)
         {
             throw new System.NotImplementedException();
         }
 
-        public Task DeleteAsync(RillReference reference, CancellationToken? cancellationToken = null)
+        public Task DeleteAsync(RillReference reference, CancellationToken cancellationToken = default)
         {
             throw new System.NotImplementedException();
         }
 
-        public IEnumerable<Event<T>> ReadEvents(RillReference reference, SequenceRange? revision = null)
+        public IEnumerable<RillCommit> ReadCommits(RillReference reference, SequenceRange? sequenceRange = default)
         {
             throw new System.NotImplementedException();
         }
 
-        public Task AppendAsync(IRillCommit<T> commit, CancellationToken? cancellationToken = null)
+        public IAsyncEnumerable<RillCommit> ReadCommitsAsync(RillReference reference, SequenceRange? sequenceRange = default, CancellationToken cancellationToken = default)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public Task AppendAsync(RillCommit commit, CancellationToken cancellationToken = default)
         {
             _appends.Add(commit);
 
@@ -37,7 +41,7 @@ namespace UnitTests
         internal void HasAppendCount(int c)
             => _appends.Should().HaveCount(c);
 
-        internal void Appended(params Event<string>[] events)
+        internal void Appended(params Event[] events)
         {
             var appendedEvents = _appends.SelectMany(i => i.Events).ToArray();
 

@@ -10,9 +10,9 @@ namespace Rill
     {
         private readonly long _value;
 
-        public static readonly Sequence None = new Sequence(0);
-        public static readonly Sequence First = new Sequence(1);
-        public static readonly Sequence Max = new Sequence(long.MaxValue);
+        public static readonly Sequence None = new(0);
+        public static readonly Sequence First = new(1);
+        public static readonly Sequence Max = new(long.MaxValue);
 
         private Sequence(long value) => _value = value;
 

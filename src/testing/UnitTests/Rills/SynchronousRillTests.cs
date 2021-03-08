@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using FluentAssertions;
 using Rill;
 using Rill.Extensions;
@@ -8,19 +9,16 @@ namespace UnitTests.Rills
 {
     public class SynchronousRillTests
     {
-        private static IRill<T> NewSut<T>()
-            => RillFactory.Synchronous<T>(RillReference.New("sync-rill-tests"));
-
-        private static string NewStringContent()
-            => Guid.NewGuid().ToString("N");
+        private static IRill NewSut()
+            => RillFactory.Synchronous(RillReference.New("sync-rill-tests"));
 
         [Fact]
         public void Returns_event_after_emitting()
         {
-            var content = NewStringContent();
+            var content = Fake.Strings.Random();
             var id = EventId.New();
             var seq = Sequence.First;
-            var sut = NewSut<string>();
+            var sut = NewSut();
 
             var ev = sut.Emit(content, id, seq);
 
@@ -33,7 +31,7 @@ namespace UnitTests.Rills
         [Fact]
         public void Requires_event_sequence_to_be_in_order()
         {
-            var sut = NewSut<string>();
+            var sut = NewSut();
             var ev1 = sut.Emit("first");
 
             Action historicSequence = () => sut.Emit("second", sequence: Sequence.First);
@@ -46,7 +44,7 @@ namespace UnitTests.Rills
             futureSequence
                 .Should()
                 .Throw<EventOutOfOrderException>()
-                .Where(ex => ex.Actual == ev1.Sequence.Add(2) && ex.Expected == ev1.Sequence.Increment());;
+                .Where(ex => ex.Actual == ev1.Sequence.Add(2) && ex.Expected == ev1.Sequence.Increment());
         }
 
         [Fact]
@@ -54,59 +52,20 @@ namespace UnitTests.Rills
         {
             var unsubscribing = InterceptingConsumer.Behaving();
             var unsubscribingDelegating = new Interceptions();
-            var sut = NewSut<string>();
-            sut.Consume.Subscribe(_ => throw new Exception("FAIL"));
-            var sub1 = sut.Consume.Subscribe(unsubscribing);
-            var sub2 = sut.Consume.Subscribe(
+            var sut = NewSut();
+            sut.Subscribe(_ => throw new Exception("FAIL"));
+            var sub1 = sut.Subscribe(unsubscribing);
+            var sub2 = sut.Subscribe(
                 unsubscribingDelegating.InOnNew,
                 unsubscribingDelegating.InOnAllSucceeded,
-                unsubscribingDelegating.InOnAnyFailed,
-                unsubscribingDelegating.InOnCompleted);
+                unsubscribingDelegating.InOnAnyFailed);
 
             sub1.Dispose();
             sub2.Dispose();
 
-            sut.Emit(NewStringContent());
+            sut.Emit(Fake.Strings.Random());
             unsubscribing.Ensure().ToBeUnTouched();
             unsubscribingDelegating.Ensure().ToBeUnTouched();
-
-            sut.Complete();
-            unsubscribing.Ensure().ToBeUnTouched();
-            unsubscribingDelegating.Ensure().ToBeUnTouched();
-        }
-
-        [Fact]
-        public void Completing_completes_all_active_consumers_even_failed_ones()
-        {
-            var behaving = InterceptingConsumer.Behaving();
-            var behavingDelegating = new Interceptions();
-            var misbehaving = InterceptingConsumer.Misbehaving();
-            var misbehavingDelegating = new Interceptions();
-            var sut = NewSut<string>();
-            sut.Consume.Subscribe(behaving);
-            sut.Consume.Subscribe(
-                behavingDelegating.InOnNew,
-                behavingDelegating.InOnAllSucceeded,
-                behavingDelegating.InOnAnyFailed,
-                behavingDelegating.InOnCompleted);
-            sut.Consume.Subscribe(misbehaving);
-            sut.Consume.Subscribe(
-                ev =>
-                {
-                    misbehavingDelegating.InOnNew(ev);
-                    throw new Exception(ev.Content);
-                },
-                misbehavingDelegating.InOnAllSucceeded,
-                misbehavingDelegating.InOnAnyFailed,
-                misbehavingDelegating.InOnCompleted);
-
-            sut.Emit(NewStringContent());
-            sut.Complete();
-
-            behaving.Ensure().OnCompletedWasCalled();
-            behavingDelegating.Ensure().OnCompletedWasCalled();
-            misbehaving.Ensure().OnCompletedWasCalled();
-            misbehavingDelegating.Ensure().OnCompletedWasCalled();
         }
 
         [Fact]
@@ -116,27 +75,25 @@ namespace UnitTests.Rills
             var behavingDelegating = new Interceptions();
             var misbehaving = InterceptingConsumer.Misbehaving(ev => ev.Sequence > Sequence.First);
             var misbehavingDelegating = new Interceptions();
-            var sut = NewSut<string>();
-            sut.Consume.Subscribe(behaving);
-            sut.Consume.Subscribe(
+            var sut = NewSut();
+            sut.Subscribe(behaving);
+            sut.Subscribe(
                 behavingDelegating.InOnNew,
                 behavingDelegating.InOnAllSucceeded,
-                behavingDelegating.InOnAnyFailed,
-                behavingDelegating.InOnCompleted);
-            sut.Consume.Subscribe(misbehaving);
-            sut.Consume.Subscribe(
+                behavingDelegating.InOnAnyFailed);
+            sut.Subscribe(misbehaving);
+            sut.Subscribe(
                 ev =>
                 {
                     misbehavingDelegating.InOnNew(ev);
                     if (ev.Sequence > Sequence.First)
-                        throw new Exception(ev.Content);
+                        throw new Exception(ev.ToString());
                 },
                 misbehavingDelegating.InOnAllSucceeded,
-                misbehavingDelegating.InOnAnyFailed,
-                misbehavingDelegating.InOnCompleted);
+                misbehavingDelegating.InOnAnyFailed);
 
-            var ev1 = sut.Emit(NewStringContent());
-            var ev2 = sut.Emit(NewStringContent());
+            var ev1 = sut.Emit(Fake.Strings.Random());
+            var ev2 = sut.Emit(Fake.Strings.Random());
 
             behaving.Ensure().OnNewOnlyHas(ev1, ev2);
             behaving.Ensure().OnAllSucceededOnlyHasId(ev1.Id);
@@ -162,14 +119,12 @@ namespace UnitTests.Rills
             var misbehaving = InterceptingConsumer.Misbehaving();
             var behavingGotCatch = false;
             var misbehavingGotCatch = false;
-            var sut = NewSut<string>();
+            var sut = NewSut();
             sut
-                .Consume
-                .Catch<string, Exception>(_ => behavingGotCatch = true)
+                .Catch<Exception>(_ => behavingGotCatch = true)
                 .Subscribe(behaving);
             sut
-                .Consume
-                .Catch<string, Exception>(_ => misbehavingGotCatch = true)
+                .Catch<Exception>(_ => misbehavingGotCatch = true)
                 .Subscribe(misbehaving);
 
             sut.Emit("v1");
@@ -191,13 +146,11 @@ namespace UnitTests.Rills
             var misbehaving = InterceptingConsumer.Misbehaving();
             var behavingGotCatch = false;
             var misbehavingGotCatch = false;
-            var sut = NewSut<string>();
+            var sut = NewSut();
             sut
-                .Consume
                 .CatchAny(_ => behavingGotCatch = true)
                 .Subscribe(behaving);
             sut
-                .Consume
                 .CatchAny(_ => misbehavingGotCatch = true)
                 .Subscribe(misbehaving);
 
@@ -216,47 +169,44 @@ namespace UnitTests.Rills
         [Fact]
         public void Supports_content_type_filtering()
         {
-            var consumer = InterceptingConsumer<int>.Behaving();
-            var sut = NewSut<object>();
+            var consumer = InterceptingConsumer<string>.Behaving();
+            var sut = NewSut();
             sut
-                .Consume
-                .OfEventType<object, int>()
+                .When<string>()
                 .Subscribe(consumer);
 
-            sut.Emit("1");
-            sut.Emit(42);
+            sut.Emit("hello world");
+            sut.Emit(new Dummy("test"));
 
-            consumer.Interceptions.Ensure().OnNewOnlyHasContents(42);
+            consumer.Interceptions.Ensure().OnNewOnlyHasContents("hello world");
         }
 
         [Fact]
         public void Supports_content_mapping()
         {
-            var consumer = InterceptingConsumer.Behaving();
-            var sut = NewSut<string>();
+            var interceptions = new List<string>();
+            var sut = NewSut();
             sut
-                .Consume
-                .Select(content => $"Mapped:{content}")
-                .Subscribe(consumer);
+                .Select(ev => $"Mapped:{ev.Content}")
+                .Subscribe(interceptions.Add);
 
             sut.Emit("1");
             sut.Emit("2");
 
-            consumer.Interceptions.Ensure().OnNewOnlyHasContents("Mapped:1", "Mapped:2");
+            interceptions.Should().BeEquivalentTo("Mapped:1", "Mapped:2");
         }
 
         [Fact]
         public void Supports_event_filtering()
         {
-            var consumer = InterceptingConsumer.Behaving();
-            var sut = NewSut<string>();
+            var consumer = InterceptingConsumer<string>.Behaving();
+            var sut = NewSut();
             sut
-                .Consume
-                .Where(ev => ev.Content == "1")
+                .When<string>()
                 .Subscribe(consumer);
 
             sut.Emit("1");
-            sut.Emit("2");
+            sut.Emit(new Dummy("test"));
 
             consumer.Interceptions.Ensure().OnNewOnlyHasContents("1");
         }
@@ -264,11 +214,11 @@ namespace UnitTests.Rills
         [Fact]
         public void Supports_content_filtering()
         {
-            var consumer = InterceptingConsumer.Behaving();
-            var sut = NewSut<string>();
+            var consumer = InterceptingConsumer<string>.Behaving();
+            var sut = NewSut();
             sut
-                .Consume
-                .Where(content => content == "1")
+                .When<string>()
+                .Where(ev => ev.Content == "1")
                 .Subscribe(consumer);
 
             sut.Emit("1");

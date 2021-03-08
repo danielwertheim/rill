@@ -12,7 +12,7 @@ namespace Rill
 
         private Timestamp(DateTime value) => _value = value;
 
-        public static Timestamp New() => new Timestamp(DateTime.UtcNow);
+        public static Timestamp New() => new(DateTime.UtcNow);
 
         public static Timestamp From(DateTime value)
         {
@@ -25,7 +25,8 @@ namespace Rill
             return new Timestamp(value);
         }
 
-        public static explicit operator DateTime(Timestamp id) => id._value;
+        public static implicit operator DateTime(Timestamp t) => t._value;
+        public static implicit operator DateTimeOffset(Timestamp t) => t._value;
 
         public static bool operator ==(Timestamp left, Timestamp right)
             => left._value == right._value;

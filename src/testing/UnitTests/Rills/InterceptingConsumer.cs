@@ -5,20 +5,27 @@ namespace UnitTests.Rills
 {
     internal static class InterceptingConsumerExtensions
     {
-        internal static InterceptionsHas<T> Ensure<T>(this InterceptingConsumer<T> consumer)
-            => new InterceptionsHas<T>(consumer.Interceptions);
+        internal static InterceptionsHas Ensure<T>(this InterceptingConsumer<T> consumer)
+            where T : class
+            => new(consumer.Interceptions);
     }
 
-    internal class InterceptingConsumer<T> : IRillConsumer<T>
+    internal class InterceptingConsumer : InterceptingConsumer<object>
     {
-        public Interceptions<T> Interceptions { get; } = new Interceptions<T>();
+    }
+
+    internal class InterceptingConsumer<T> : IRillConsumer<Event<T>>
+        where T : class
+    {
+        public Interceptions Interceptions { get; } = new();
 
         public Action<Event<T>>? AfterOnNew { get; private set; }
 
-        private InterceptingConsumer() { }
+        protected InterceptingConsumer()
+        {
+        }
 
-        internal static InterceptingConsumer<T> Behaving()
-            => new InterceptingConsumer<T>();
+        internal static InterceptingConsumer<T> Behaving() => new();
 
         internal static InterceptingConsumer<T> Misbehaving(Func<Event<T>, bool>? failPredicate = null)
             => new InterceptingConsumer<T>().ConfigureAsMisbehaving(failPredicate);
@@ -27,7 +34,7 @@ namespace UnitTests.Rills
         {
             AfterOnNew = ev =>
             {
-                if(failPredicate == null || failPredicate(ev))
+                if (failPredicate == null || failPredicate(ev))
                     throw new Exception($"Intentionally failing. Event content: '{ev.Content}'.");
             };
 
@@ -36,7 +43,7 @@ namespace UnitTests.Rills
 
         public void OnNew(Event<T> ev)
         {
-            Interceptions.InOnNew(ev);
+            Interceptions.InOnNew(ev.AsUntyped());
             AfterOnNew?.Invoke(ev);
         }
 
@@ -45,17 +52,5 @@ namespace UnitTests.Rills
 
         public void OnAnyFailed(EventId eventId)
             => Interceptions.InOnAnyFailed(eventId);
-
-        public void OnCompleted()
-            => Interceptions.InOnCompleted();
-    }
-
-    internal static class InterceptingConsumer
-    {
-        internal static InterceptingConsumer<string> Behaving()
-            => InterceptingConsumer<string>.Behaving();
-
-        internal static InterceptingConsumer<string> Misbehaving(Func<Event<string>, bool>? failPredicate = null)
-            => InterceptingConsumer<string>.Misbehaving(failPredicate);
     }
 }

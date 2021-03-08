@@ -12,6 +12,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Testing", "Testing", "{6E7D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rill.Stores.InMemory", "main\Rill.Stores.InMemory\Rill.Stores.InMemory.csproj", "{15BA761C-F7AB-4AB3-8E85-447234B8D8AE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rill.Stores.EfCore", "main\Rill.Stores.EfCore\Rill.Stores.EfCore.csproj", "{BE0A69D2-AF44-4AD9-BEC2-B8574380C6F3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTests", "testing\IntegrationTests\IntegrationTests.csproj", "{3B969263-511B-4A22-A5ED-49AAF312260E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,9 +38,18 @@ Global
 		{15BA761C-F7AB-4AB3-8E85-447234B8D8AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15BA761C-F7AB-4AB3-8E85-447234B8D8AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15BA761C-F7AB-4AB3-8E85-447234B8D8AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE0A69D2-AF44-4AD9-BEC2-B8574380C6F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE0A69D2-AF44-4AD9-BEC2-B8574380C6F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE0A69D2-AF44-4AD9-BEC2-B8574380C6F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE0A69D2-AF44-4AD9-BEC2-B8574380C6F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B969263-511B-4A22-A5ED-49AAF312260E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B969263-511B-4A22-A5ED-49AAF312260E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B969263-511B-4A22-A5ED-49AAF312260E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B969263-511B-4A22-A5ED-49AAF312260E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{61D3FB80-FFDC-4555-A6D1-DC999D664D8E} = {72A668D5-7B11-4230-9DEA-9219B90D34DB}
 		{AE397B06-28D1-424F-8D07-7180972F24E8} = {6E7DDDA4-E20C-49FE-BDF5-6324B04DAA7E}
+		{3B969263-511B-4A22-A5ED-49AAF312260E} = {6E7DDDA4-E20C-49FE-BDF5-6324B04DAA7E}
 	EndGlobalSection
 EndGlobal

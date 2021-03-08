@@ -10,7 +10,7 @@ namespace Rill
 
         private CommitId(Guid value) => _value = value;
 
-        public static CommitId New() => new CommitId(Guid.NewGuid());
+        public static CommitId New() => new(Guid.NewGuid());
 
         public static CommitId From(Guid value)
         {

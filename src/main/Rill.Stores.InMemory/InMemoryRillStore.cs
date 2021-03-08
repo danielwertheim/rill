@@ -2,14 +2,15 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Rill.Stores.InMemory
 {
-    public class InMemoryRillStore<T> : IRillStore<T>
+    public class InMemoryRillStore : IRillStore
     {
-        private readonly ConcurrentDictionary<RillReference, RillState> _rills = new ConcurrentDictionary<RillReference, RillState>();
+        private readonly ConcurrentDictionary<RillReference, RillState> _rills = new();
 
         private RillState? GetRillState(RillReference reference)
             => _rills.TryGetValue(reference, out var header)
@@ -19,18 +20,16 @@ namespace Rill.Stores.InMemory
         private RillState GetOrAddRill(RillReference reference, Timestamp firstTimestamp)
             => _rills.GetOrAdd(reference, key => new RillState(key, firstTimestamp));
 
-        public Task<RillHeader?> GetHeaderAsync(
+        public Task<RillDetails?> GetDetailsAsync(
             RillReference reference,
-            CancellationToken? cancellationToken = null)
+            CancellationToken cancellationToken = default)
         {
             var headerSync = GetRillState(reference);
 
-            return Task.FromResult(headerSync?.Header);
+            return Task.FromResult(headerSync?.Details);
         }
 
-        public Task AppendAsync(
-            IRillCommit<T> commit,
-            CancellationToken? cancellationToken = null)
+        public Task AppendAsync(RillCommit commit, CancellationToken cancellationToken = default)
         {
             var rill = GetOrAddRill(commit.Reference, commit.Timestamp);
 
@@ -39,49 +38,64 @@ namespace Rill.Stores.InMemory
             return Task.CompletedTask;
         }
 
-        public Task DeleteAsync(
-            RillReference reference,
-            CancellationToken? cancellationToken = null)
+        public Task DeleteAsync(RillReference reference, CancellationToken cancellationToken = default)
         {
             _rills.TryRemove(reference, out _);
 
             return Task.CompletedTask;
         }
 
-        public IEnumerable<Event<T>> ReadEvents(RillReference reference, SequenceRange? sequenceRange = default)
+        public IEnumerable<RillCommit> ReadCommits(RillReference reference, SequenceRange? sequenceRange = default)
         {
             var rill = GetRillState(reference);
             if (rill == null)
-                return Enumerable.Empty<Event<T>>();
+                return Enumerable.Empty<RillCommit>();
 
-            return sequenceRange == null
-                ? rill.Commits.SelectMany(c => c.Events)
-                : rill.Commits.SelectMany(c => c.Events.Where(e => sequenceRange.Includes(e.Sequence)));
+            return sequenceRange == null || sequenceRange == SequenceRange.Any
+                ? rill.Commits
+                : rill.Commits.Where(c => c.SequenceRange.Includes(sequenceRange.Lower) || c.SequenceRange.Includes(sequenceRange.Upper));
+        }
+
+        public async IAsyncEnumerable<RillCommit> ReadCommitsAsync(RillReference reference, SequenceRange? sequenceRange = default, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+        {
+            var rill = GetRillState(reference);
+            if (rill == null)
+            {
+                await ValueTask.CompletedTask;
+                yield break;
+            }
+
+            var enumerable = sequenceRange == null || sequenceRange == SequenceRange.Any
+                ? rill.Commits
+                : rill.Commits.Where(c => c.SequenceRange.Includes(sequenceRange.Lower) || c.SequenceRange.Includes(sequenceRange.Upper));
+
+            foreach (var e in enumerable)
+                yield return e;
         }
 
         private sealed class RillState
         {
-            private readonly object _sync = new object();
-            private ImmutableList<IRillCommit<T>> _commits = ImmutableList<IRillCommit<T>>.Empty;
+            private readonly object _sync = new();
+            private ImmutableList<RillCommit> _commits = ImmutableList<RillCommit>.Empty;
 
-            internal RillHeader Header { get; private set; }
+            internal RillDetails Details { get; private set; }
 
-            internal IEnumerable<IRillCommit<T>> Commits => _commits;
+            internal IEnumerable<RillCommit> Commits => _commits;
 
             internal RillState(RillReference reference, Timestamp timestamp)
-                => Header = RillHeader.New(reference, timestamp);
+                => Details = RillDetails.New(reference, timestamp);
 
-            internal void Add(IRillCommit<T> commit)
+            internal void Add(RillCommit commit)
             {
                 lock (_sync)
                 {
-                    if (Header.Sequence != Sequence.None && Header.Sequence.Increment() != commit.SequenceRange.Lower)
-                        throw Exceptions.StoreConcurrency(Header.Reference, Header.Sequence, commit.SequenceRange.Lower);
+                    if (Details.Sequence != Sequence.None && Details.Sequence.Increment() != commit.SequenceRange.Lower)
+                        throw Exceptions.StoreConcurrency(Details.Reference, Details.Sequence, commit.SequenceRange.Lower);
 
-                    Header = RillHeader.From(
-                        Header.Reference,
+                    Details = RillDetails.From(
+                        Details.Reference,
                         commit.SequenceRange.Upper,
-                        Header.CreatedAt,
+                        Details.CreatedAt,
                         commit.Timestamp);
 
                     _commits = _commits.Add(commit);

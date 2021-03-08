@@ -31,17 +31,14 @@ namespace Rill.Operators
                 _map = map;
             }
 
-            public ValueTask OnNewAsync(Event<TFrom> ev)
-                => _consumer.OnNewAsync(ev.Map(_map));
+            public ValueTask OnNewAsync(TFrom value)
+                => _consumer.OnNewAsync(_map(value));
 
             public ValueTask OnAllSucceededAsync(EventId eventId)
                 => _consumer.OnAllSucceededAsync(eventId);
 
             public ValueTask OnAnyFailedAsync(EventId eventId)
                 => _consumer.OnAnyFailedAsync(eventId);
-
-            public ValueTask OnCompletedAsync()
-                => _consumer.OnCompletedAsync();
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -9,25 +8,23 @@ namespace UnitTests.Rills
 {
     internal static class InterceptionsExtensions
     {
-        internal static InterceptionsHas<T> Ensure<T>(this Interceptions<T> interceptions)
-            => new InterceptionsHas<T>(interceptions);
+        internal static InterceptionsHas Ensure(this Interceptions interceptions) => new(interceptions);
     }
 
-    internal class Interceptions<T>
+    internal class Interceptions
     {
-        private readonly List<Event<T>> _inOnNew = new List<Event<T>>();
-        private readonly List<EventId> _inOnAllSucceeded = new List<EventId>();
-        private readonly List<EventId> _inOnAnyFailed = new List<EventId>();
+        private readonly List<Event> _inOnNew = new();
+        private readonly List<EventId> _inOnAllSucceeded = new();
+        private readonly List<EventId> _inOnAnyFailed = new();
 
-        public IReadOnlyList<Event<T>> OnNew => _inOnNew;
+        public IReadOnlyList<Event> OnNew => _inOnNew;
         public IReadOnlyList<EventId> OnAllSucceeded => _inOnAllSucceeded;
         public IReadOnlyList<EventId> OnAnyFailed => _inOnAnyFailed;
-        public bool OnCompletedIntercepted { get; private set; }
 
-        internal void InOnNew(Event<T> ev)
+        internal void InOnNew(Event ev)
             => _inOnNew.Add(ev);
 
-        internal ValueTask InOnNewAsync(Event<T> ev)
+        internal ValueTask InOnNewAsync(Event ev)
         {
             _inOnNew.Add(ev);
 
@@ -53,27 +50,13 @@ namespace UnitTests.Rills
 
             return ValueTask.CompletedTask;
         }
-
-        internal void InOnCompleted()
-            => OnCompletedIntercepted = true;
-
-        internal ValueTask InOnCompletedAsync()
-        {
-            OnCompletedIntercepted = true;
-
-            return ValueTask.CompletedTask;
-        }
     }
 
-    internal class Interceptions : Interceptions<string>
+    internal class InterceptionsHas
     {
-    }
+        private readonly Interceptions _interceptions;
 
-    internal class InterceptionsHas<T>
-    {
-        private readonly Interceptions<T> _interceptions;
-
-        internal InterceptionsHas(Interceptions<T> interceptions)
+        internal InterceptionsHas(Interceptions interceptions)
             => _interceptions = interceptions;
 
         public void ToBeUnTouched()
@@ -81,19 +64,20 @@ namespace UnitTests.Rills
             OnNewIsEmpty();
             OnAllSucceededIsEmpty();
             OnAnyFailedIsEmpty();
-            OnCompletedWasNotCalled();
         }
 
         public void OnNewIsEmpty()
             => _interceptions.OnNew.Should().BeEmpty();
 
-        internal void OnNewOnlyHas(params Event<T>[] events)
+        internal void OnNewOnlyHas<T>(params Event<T>[] events) where T : class
         {
-            _interceptions.OnNew.Should().HaveCount(events.Length);
-            _interceptions.OnNew.Should().Contain(events);
+            var untypedEv = events.Select(ev => ev.AsUntyped()).ToArray();
+
+            _interceptions.OnNew.Should().HaveCount(untypedEv.Length);
+            _interceptions.OnNew.Should().Contain(untypedEv);
         }
 
-        internal void OnNewOnlyHasContents(params T[] contents)
+        internal void OnNewOnlyHasContents(params object[] contents)
         {
             _interceptions.OnNew.Should().HaveCount(contents.Length);
             _interceptions.OnNew.Select(ev => ev.Content).Should().Contain(contents);
@@ -110,11 +94,5 @@ namespace UnitTests.Rills
 
         public void OnAnyFailedOnlyHasId(EventId id)
             => _interceptions.OnAnyFailed.Should().OnlyContain(interceptedId => interceptedId == id);
-
-        public void OnCompletedWasCalled()
-            => _interceptions.OnCompletedIntercepted.Should().BeTrue();
-
-        public void OnCompletedWasNotCalled()
-            => _interceptions.OnCompletedIntercepted.Should().BeFalse();
     }
 }

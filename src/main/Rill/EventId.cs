@@ -10,7 +10,7 @@ namespace Rill
 
         private EventId(Guid value) => _value = value;
 
-        public static EventId New() => new EventId(Guid.NewGuid());
+        public static EventId New() => new(Guid.NewGuid());
 
         public static EventId From(Guid value)
         {
@@ -19,6 +19,9 @@ namespace Rill
 
             return new EventId(value);
         }
+
+        public static EventId From(string value)
+            => From(Guid.Parse(value));
 
         public static explicit operator Guid(EventId id) => id._value;
 

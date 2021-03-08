@@ -7,7 +7,7 @@ namespace Rill
         public Sequence Lower { get; }
         public Sequence Upper { get; }
 
-        public static readonly SequenceRange Any = new SequenceRange(Sequence.First, Sequence.Max);
+        public static readonly SequenceRange Any = new(Sequence.First, Sequence.Max);
 
         private SequenceRange(Sequence lower, Sequence upper)
         {

@@ -6,6 +6,7 @@ stages:
     timeoutInMinutes: 5
     cancelTimeoutInMinutes: 2
     steps:
+
     - task: UseDotNet@2
       displayName: 'Use .NET Core 5.x'
       inputs:
@@ -27,6 +28,33 @@ stages:
         arguments: '-c $(BuildConfiguration) --no-build'
         testRunTitle: 'UnitTests'
 
+    - task: DockerCompose@0
+      displayName: 'Start Test dependencies'
+      env:
+        Rill_SqlServer__Pass: $(Rill_SqlServer__Pass)
+      inputs:
+        containerregistrytype: 'Container Registry'
+        dockerComposeFile: 'docker-compose.yml'
+        dockerComposeFileArgs: |
+          Rill_SqlServer__Pass=$(Rill_SqlServer__Pass)
+        action: 'Run a Docker Compose command'
+        dockerComposeCommand: 'up -d'
+    
+    - task: CmdLine@2
+      displayName: 'Wait for test dependencies'
+      inputs:
+        script: 'sleep 10'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'IntegrationTests'
+      env:
+        Rill_SqlServer__Pass: $(Rill_SqlServer__Pass)
+      inputs:
+        command: test
+        projects: 'src/**/IntegrationTests.csproj'
+        arguments: '-c $(BuildConfiguration) --no-build'
+        testRunTitle: 'IntegrationTests'
+
     - task: DotNetCoreCLI@2
       displayName: 'Pack Nupkg'
       inputs:
@@ -40,3 +68,12 @@ stages:
       inputs:
         path: '$(Build.ArtifactStagingDirectory)'
         artifact: Artifacts
+
+    - task: DockerCompose@0
+      displayName: 'Stop Test dependencies'
+      condition: always()
+      inputs:
+        containerregistrytype: 'Container Registry'
+        dockerComposeFile: 'docker-compose.yml'
+        action: 'Run a Docker Compose command'
+        dockerComposeCommand: 'down'

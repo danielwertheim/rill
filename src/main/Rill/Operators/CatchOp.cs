@@ -3,7 +3,7 @@
 namespace Rill.Operators
 {
     internal sealed class CatchOp<T, TException> : IRillConsumable<T>
-        where T : class
+        // where T : class
         where TException : Exception
     {
         private readonly IRillConsumable<T> _src;
@@ -32,11 +32,11 @@ namespace Rill.Operators
                 _handler = handler;
             }
 
-            public void OnNew(Event<T> ev)
+            public void OnNew(T value)
             {
                 try
                 {
-                    _consumer.OnNew(ev);
+                    _consumer.OnNew(value);
                 }
                 catch (TException ex)
                 {
@@ -49,9 +49,6 @@ namespace Rill.Operators
 
             public void OnAnyFailed(EventId eventId)
                 => _consumer.OnAnyFailed(eventId);
-
-            public void OnCompleted()
-                => _consumer.OnCompleted();
         }
     }
 }

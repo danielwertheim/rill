@@ -2,7 +2,7 @@
 
 namespace Rill
 {
-    public interface IAsyncRillConsumable<T> : IDisposable
+    public interface IAsyncRillConsumable<out T> : IDisposable
     {
         /// <summary>
         /// Subscribes a new consumer.

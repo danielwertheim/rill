@@ -30,17 +30,14 @@ namespace Rill.Operators
                 _map = map;
             }
 
-            public void OnNew(Event<TFrom> value)
-                => _consumer.OnNew(value.Map(_map));
+            public void OnNew(TFrom value)
+                => _consumer.OnNew(_map(value));
 
             public void OnAllSucceeded(EventId eventId)
                 => _consumer.OnAllSucceeded(eventId);
 
             public void OnAnyFailed(EventId eventId)
                 => _consumer.OnAnyFailed(eventId);
-
-            public void OnCompleted()
-                => _consumer.OnCompleted();
         }
     }
 }
