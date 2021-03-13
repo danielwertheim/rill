@@ -7,15 +7,15 @@ namespace Rill
         public static EventOutOfOrderException EventOutOrOrder(Sequence expected, Sequence actual)
             => new(expected, actual);
 
-        public static RillStoreIsCorruptException CorruptStoreMissingRillWhenWriting(RillReference reference)
-            => new(reference, "No Rill was found and Commit Sequence does not represent first commit, hence state is corrupt");
+        public static RillStoreIsCorruptException StoreIsMissingRillWhenWriting(RillReference reference)
+            => new(reference, $"Rill with Reference:({reference}) was not found, and the Commit Sequence does not represent an initial commit, hence state is corrupt");
 
         public static RillStoreConcurrencyException StoreConcurrency(RillReference reference, Sequence currentSequence, Sequence expectedSequence)
             => new(
                 reference,
                 currentSequence,
                 expectedSequence,
-                $"Rill with Reference:({reference}) has wrong sequence. Expected:({expectedSequence}) Actual:({currentSequence}).");
+                $"Rill with Reference:({reference}) has wrong sequence. ActualSeq:({currentSequence}) ExpectedSeq:({expectedSequence}).");
     }
 
     public class EventOutOfOrderException : Exception

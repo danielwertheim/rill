@@ -57,7 +57,7 @@ namespace Rill.Stores.EfCore
             if (rillEntity == null)
             {
                 if (commit.SequenceRange.Lower != Sequence.First)
-                    throw Exceptions.CorruptStoreMissingRillWhenWriting(commit.Reference);
+                    throw Exceptions.StoreIsMissingRillWhenWriting(commit.Reference);
 
                 rillEntity = RillEntity.New(commit.Reference, commit.SequenceRange, commit.Timestamp);
 
@@ -65,12 +65,11 @@ namespace Rill.Stores.EfCore
             }
             else
             {
-                var expectedNextSeq = rillEntity.LastSequence + 1;
+                var expectedNextSeq = rillEntity.Sequence + 1;
                 if (commit.SequenceRange.Lower != expectedNextSeq)
-                    throw Exceptions.StoreConcurrency(commit.Reference, Sequence.From(rillEntity.LastSequence), commit.SequenceRange.Lower);
+                    throw Exceptions.StoreConcurrency(commit.Reference, Sequence.From(rillEntity.Sequence), commit.SequenceRange.Lower);
 
-                rillEntity.SetSequence(commitEntity.SequenceUpperBound);
-                rillEntity.SetLastChangedAt(commitEntity.CommittedAt);
+                rillEntity.Register(commitEntity);
             }
 
             await dbContext.Commits.AddAsync(commitEntity, cancellationToken).ConfigureAwait(false);
