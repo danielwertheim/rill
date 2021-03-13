@@ -215,6 +215,31 @@ namespace ConsoleSample.Views
 }
 ```
 
+## Stores
+- Rill.Stores.InMemory
+- Rill.Stores.EfCore
+- Rill.Stores.MongoDB (*Coming soon!*)
+
+### Rill.Stores.InMemory
+Simple in process storage for fiddling and testing.
+
+```csharp
+var rillStore = new InMemoryRillStore();
+```
+
+### Rill.Stores.EfCore
+Uses/depends on the `Microsoft.EntityFrameworkCore.Relational` package, but the intention is to **target SQL-Server** but SQLite *could* work as well.
+
+Install the package `Rill.Stores.EfCore` and `Microsoft.EntityFrameworkCore.SqlServer`, then harvest:
+
+```csharp
+var dbContextOptions = new DbContextOptionsBuilder<RillDbContext>()
+    .UseSqlServer(@"Server=.,1401;Database=Rill;User=foo;Password=bar;MultipleActiveResultSets=True;TrustServerCertificate=true")
+    .Options;
+
+var rillStore = new EfCoreRillStore(dbContextOptions);
+```
+
 ## Development
 Run
 

@@ -9,20 +9,20 @@ namespace Rill.Stores.EfCore
     {
         internal string Name { get; }
         internal Guid Id { get; }
-        internal long LastSequence { get; private set; }
+        internal long Sequence { get; private set; }
         internal DateTimeOffset CreatedAt { get; }
         internal DateTimeOffset LastChangedAt { get; private set; }
 
         private RillEntity(
             string name,
             Guid id,
-            long lastSequence,
+            long sequence,
             DateTimeOffset createdAt,
             DateTimeOffset lastChangedAt)
         {
             Name = name;
             Id = id;
-            LastSequence = lastSequence;
+            Sequence = sequence;
             CreatedAt = createdAt;
             LastChangedAt = lastChangedAt;
         }
@@ -33,18 +33,18 @@ namespace Rill.Stores.EfCore
         internal static RillEntity New(RillReference reference, SequenceRange sequenceRange, Timestamp createdAt)
             => From(reference, sequenceRange, createdAt, createdAt);
 
-        internal void SetSequence(long value)
-            => LastSequence = value;
-
-        internal void SetLastChangedAt(DateTimeOffset value)
-            => LastChangedAt = value;
-
         internal RillDetails ToDetails() =>
             RillDetails.From(
                 RillReference.From(Name, Id),
-                Sequence.From(LastSequence),
+                Rill.Sequence.From(Sequence),
                 Timestamp.From(CreatedAt.UtcDateTime),
                 Timestamp.From(LastChangedAt.UtcDateTime));
+
+        internal void Register(RillCommitEntity commit)
+        {
+            Sequence = commit.SequenceUpperBound;
+            LastChangedAt = commit.CommittedAt;
+        }
     }
 
     internal class RillEntityConfiguration : IEntityTypeConfiguration<RillEntity>
@@ -59,7 +59,7 @@ namespace Rill.Stores.EfCore
             builder
                 .HasIndex(i => i.Name);
             builder
-                .HasIndex(i => i.LastSequence);
+                .HasIndex(i => i.Sequence);
 
             builder
                 .Property(i => i.Id)
@@ -71,7 +71,7 @@ namespace Rill.Stores.EfCore
                 .IsUnicode(false)
                 .HasMaxLength(32);
             builder
-                .Property(i => i.LastSequence)
+                .Property(i => i.Sequence)
                 .IsRequired()
                 .IsConcurrencyToken();
             builder
