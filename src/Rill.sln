@@ -16,6 +16,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rill.Stores.EfCore", "main\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTests", "testing\IntegrationTests\IntegrationTests.csproj", "{3B969263-511B-4A22-A5ED-49AAF312260E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rill.Stores.MongoDB", "main\Rill.Stores.MongoDB\Rill.Stores.MongoDB.csproj", "{8DB37B82-8C1F-468C-8D54-D9982D7E3E09}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,6 +48,10 @@ Global
 		{3B969263-511B-4A22-A5ED-49AAF312260E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3B969263-511B-4A22-A5ED-49AAF312260E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B969263-511B-4A22-A5ED-49AAF312260E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DB37B82-8C1F-468C-8D54-D9982D7E3E09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DB37B82-8C1F-468C-8D54-D9982D7E3E09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DB37B82-8C1F-468C-8D54-D9982D7E3E09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DB37B82-8C1F-468C-8D54-D9982D7E3E09}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{61D3FB80-FFDC-4555-A6D1-DC999D664D8E} = {72A668D5-7B11-4230-9DEA-9219B90D34DB}

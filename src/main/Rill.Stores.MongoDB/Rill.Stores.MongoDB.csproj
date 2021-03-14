@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <PackageId>Rill.Stores.MongoDB</PackageId>
+    <PackageTags>rill streams events storage</PackageTags>
+    <Description>A Rill is a "small" stream of events. This projects handles storage of Rills using MongoDB.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Rill\Rill.csproj" />
+  </ItemGroup>
+</Project>
