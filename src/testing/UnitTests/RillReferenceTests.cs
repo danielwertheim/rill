@@ -39,8 +39,8 @@ namespace UnitTests
         [Fact]
         public void Can_not_be_reconstructed_if_parts_are_missing()
         {
-            Action missingName = () => RillReference.From(string.Empty, Guid.Empty);
-            Action missingId = () => RillReference.From(Fake.Strings.Random(), Guid.Empty);
+            Action missingName = () => RillReference.From(string.Empty, string.Empty);
+            Action missingId = () => RillReference.From(Fake.Strings.Random(), string.Empty);
 
             missingName.Should().Throw<ArgumentException>().And.ParamName.Should().Be("name");
             missingId.Should().Throw<ArgumentException>().And.ParamName.Should().Be("id");

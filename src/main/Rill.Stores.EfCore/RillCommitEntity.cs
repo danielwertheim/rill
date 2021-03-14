@@ -14,7 +14,7 @@ namespace Rill.Stores.EfCore
     {
         internal Guid Id { get; }
         internal string RillName { get; }
-        internal Guid RillId { get; }
+        internal string RillId { get; }
         internal DateTimeOffset CommittedAt { get; }
         internal long SequenceLowerBound { get; }
         internal long SequenceUpperBound { get; }
@@ -23,7 +23,7 @@ namespace Rill.Stores.EfCore
         private RillCommitEntity(
             Guid id,
             string rillName,
-            Guid rillId,
+            string rillId,
             DateTimeOffset committedAt,
             long sequenceLowerBound,
             long sequenceUpperBound)

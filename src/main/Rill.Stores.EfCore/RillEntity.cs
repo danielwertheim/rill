@@ -8,14 +8,14 @@ namespace Rill.Stores.EfCore
     internal class RillEntity
     {
         internal string Name { get; }
-        internal Guid Id { get; }
+        internal string Id { get; }
         internal long Sequence { get; private set; }
         internal DateTimeOffset CreatedAt { get; }
         internal DateTimeOffset LastChangedAt { get; private set; }
 
         private RillEntity(
             string name,
-            Guid id,
+            string id,
             long sequence,
             DateTimeOffset createdAt,
             DateTimeOffset lastChangedAt)
