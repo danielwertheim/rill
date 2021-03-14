@@ -9,4 +9,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Rill\Rill.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MongoDB.Driver" Version="2.12.0" />
+  </ItemGroup>
 </Project>
