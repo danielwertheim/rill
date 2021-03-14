@@ -218,7 +218,11 @@ namespace ConsoleSample.Views
 ## Stores
 - Rill.Stores.InMemory
 - Rill.Stores.EfCore
+    - Support for all streams in one table setup ✔
+    - Support for tables per stream (*Coming soon!*)
 - Rill.Stores.MongoDB (*Coming soon!*)
+    - Support for all streams in one collection setup (*Coming soon!*)
+    - Support for collection per stream (*Coming soon!*)
 
 ### Rill.Stores.InMemory
 Simple in process storage for fiddling and testing.
