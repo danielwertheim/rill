@@ -1,4 +1,8 @@
 {
+    "Mongo": {
+        "User": "foo",
+        "Pass": "foo_bar"
+    },
     "SqlServer": {
         "Pass": "foo_bar"
     }

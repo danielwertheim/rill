@@ -31,11 +31,15 @@ stages:
     - task: DockerCompose@0
       displayName: 'Start Test dependencies'
       env:
+        Rill_Mongo__User: $(Rill_Mongo__User)
+        Rill_Mongo__Pass: $(Rill_Mongo__Pass)
         Rill_SqlServer__Pass: $(Rill_SqlServer__Pass)
       inputs:
         containerregistrytype: 'Container Registry'
         dockerComposeFile: 'docker-compose.yml'
         dockerComposeFileArgs: |
+          Rill_Mongo__User: $(Rill_Mongo__User)
+          Rill_Mongo__Pass: $(Rill_Mongo__Pass)
           Rill_SqlServer__Pass=$(Rill_SqlServer__Pass)
         action: 'Run a Docker Compose command'
         dockerComposeCommand: 'up -d'
@@ -48,6 +52,8 @@ stages:
     - task: DotNetCoreCLI@2
       displayName: 'IntegrationTests'
       env:
+        Rill_Mongo__User: $(Rill_Mongo__User)
+        Rill_Mongo__Pass: $(Rill_Mongo__Pass)
         Rill_SqlServer__Pass: $(Rill_SqlServer__Pass)
       inputs:
         command: test

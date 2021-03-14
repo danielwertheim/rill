@@ -8,3 +8,10 @@ services:
       - MSSQL_PID=Express
       - ACCEPT_EULA=Y
       - SA_PASSWORD=${Rill_SqlServer__Pass}
+  mongo:
+    image: mongo:latest
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${Rill_Mongo__User}
+      - MONGO_INITDB_ROOT_PASSWORD=${Rill_Mongo__Pass}
