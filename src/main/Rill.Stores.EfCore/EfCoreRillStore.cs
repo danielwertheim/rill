@@ -51,7 +51,7 @@ namespace Rill.Stores.EfCore
 
             var rillEntity = await dbContext.Rills
                 .IgnoreAutoIncludes()
-                .SingleOrDefaultAsync(r => r.Id == commit.Reference.Id && r.Name == commit.Reference.Name, cancellationToken)
+                .SingleOrDefaultAsync(r => r.Name == commitEntity.RillName && r.Id == commitEntity.RillId, cancellationToken)
                 .ConfigureAwait(false);
 
             if (rillEntity == null)
@@ -82,7 +82,7 @@ namespace Rill.Stores.EfCore
             await using var dbContext = GetContext();
 
             var rill = await dbContext.Rills
-                .SingleOrDefaultAsync(r => r.Id == reference.Id && r.Name == reference.Name, cancellationToken)
+                .SingleOrDefaultAsync(r => r.Name == reference.Name && r.Id == reference.Id, cancellationToken)
                 .ConfigureAwait(false);
 
             if (rill == null)
@@ -103,8 +103,7 @@ namespace Rill.Stores.EfCore
                 .Matching(reference, sequenceRange ?? SequenceRange.Any)
                 .Include(c => c.Events.OrderBy(e => e.Sequence))
                 .AsSplitQuery()
-                .Where(c => c.RillName == reference.Name && c.RillId == reference.Id)
-                .Select(c => c.ToCommit(reference, _eventContentTypeResolver, _eventContentSerializer));
+                .Select(c => c.ToCommit(_eventContentTypeResolver, _eventContentSerializer));
 
             foreach (var commit in commits)
                 yield return commit;
@@ -129,7 +128,7 @@ namespace Rill.Stores.EfCore
             await using var enumerator = commits.GetAsyncEnumerator();
             while (await enumerator.MoveNextAsync())
             {
-                yield return enumerator.Current.ToCommit(reference, _eventContentTypeResolver, _eventContentSerializer);
+                yield return enumerator.Current.ToCommit(_eventContentTypeResolver, _eventContentSerializer);
             }
         }
     }

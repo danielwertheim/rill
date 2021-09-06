@@ -4,8 +4,8 @@ namespace Rill.Stores.EfCore.Extensions
 {
     internal static class QueryExtensions
     {
-        private static IQueryable<RillCommitEntity> Matching(this IQueryable<RillCommitEntity> commits, RillReference reference)
-            => commits.Where(c => c.RillId == reference.Id);
+        private static IQueryable<RillCommitEntity> Matching(this IQueryable<RillCommitEntity> commits, RillReference reference) =>
+            commits.Where(c => c.RillName == reference.Name && c.RillId == reference.Id);
 
         private static IQueryable<RillCommitEntity> Matching(this IQueryable<RillCommitEntity> commits, SequenceRange range)
         {

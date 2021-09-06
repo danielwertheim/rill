@@ -70,21 +70,16 @@ namespace Rill.Stores.EfCore
     {
         public void Configure(EntityTypeBuilder<RillEventEntity> builder)
         {
-            builder
-                .ToTable("RillEvent");
+            builder.ToTable("RillEvent");
+
             builder
                 .HasKey(i => i.Id)
                 .HasName("PK_RillEvent");
-            builder
-                .HasIndex(i => i.TypeName);
-            builder
-                .HasIndex(i => i.Sequence);
-            // builder
-            //     .HasOne<RillEntity>()
-            //     .WithMany()
-            //     .HasForeignKey(i => i.RillId)
-            //     .HasConstraintName("FK_RillEvent_Rill")
-            //     .OnDelete(DeleteBehavior.NoAction);
+
+            builder.HasIndex(i => i.CommitId);
+            builder.HasIndex(i => i.TypeName);
+            builder.HasIndex(i => i.Sequence);
+
             builder
                 .HasOne<RillCommitEntity>()
                 .WithMany(i => i.Events)
@@ -95,41 +90,45 @@ namespace Rill.Stores.EfCore
             builder
                 .Property(i => i.Id)
                 .IsRequired()
-                .ValueGeneratedNever();
-            // builder
-            //     .Property(i => i.RillId)
-            //     .IsRequired()
-            //     .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+                .ValueGeneratedNever()
+                .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
             builder
                 .Property(i => i.CommitId)
                 .IsRequired()
                 .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
             builder
                 .Property(i => i.TypeAssemblyName)
                 .IsUnicode(false)
                 .HasMaxLength(128)
                 .IsRequired()
                 .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
             builder
                 .Property(i => i.TypeNamespace)
                 .IsUnicode(false)
                 .HasMaxLength(128)
                 .IsRequired()
                 .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
             builder
                 .Property(i => i.TypeName)
                 .IsUnicode(false)
                 .HasMaxLength(32)
                 .IsRequired()
                 .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
             builder
                 .Property(i => i.Sequence)
                 .IsRequired()
                 .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
             builder
                 .Property(i => i.Timestamp)
                 .IsRequired()
                 .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
             builder
                 .Property(i => i.Content)
                 .IsUnicode()

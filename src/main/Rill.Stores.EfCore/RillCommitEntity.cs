@@ -51,8 +51,9 @@ namespace Rill.Stores.EfCore
             return entity;
         }
 
-        internal RillCommit ToCommit(RillReference rillRef, IEventContentTypeResolver typeResolver, IEventContentSerializer serializer)
+        internal RillCommit ToCommit(IEventContentTypeResolver typeResolver, IEventContentSerializer serializer)
         {
+            var rillRef = RillReference.From(RillName, RillId);
             var id = CommitId.From(Id);
             var lower = Sequence.From(SequenceLowerBound);
             var upper = Sequence.From(SequenceUpperBound);
@@ -72,15 +73,15 @@ namespace Rill.Stores.EfCore
     {
         public void Configure(EntityTypeBuilder<RillCommitEntity> builder)
         {
-            builder
-                .ToTable("RillCommit");
+            builder.ToTable("RillCommit");
+
             builder
                 .HasKey(i => i.Id)
                 .HasName("PK_RillCommit");
-            builder
-                .HasIndex(i => i.SequenceLowerBound);
-            builder
-                .HasIndex(i => i.SequenceUpperBound);
+
+            builder.HasIndex(i => i.SequenceLowerBound);
+            builder.HasIndex(i => i.SequenceUpperBound);
+            builder.HasIndex(i => new { i.RillName, i.RillId });
 
             builder
                 .HasOne<RillEntity>()
@@ -92,19 +93,33 @@ namespace Rill.Stores.EfCore
             builder
                 .Property(i => i.Id)
                 .IsRequired()
-                .ValueGeneratedNever();
+                .ValueGeneratedNever()
+                .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
+            builder
+                .Property(i => i.RillName)
+                .IsRequired()
+                .IsUnicode(false)
+                .HasMaxLength(32)
+                .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
             builder
                 .Property(i => i.RillId)
                 .IsRequired()
+                .IsUnicode(false)
+                .HasMaxLength(32)
                 .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
             builder
                 .Property(i => i.CommittedAt)
                 .IsRequired()
                 .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
             builder
                 .Property(i => i.SequenceLowerBound)
                 .IsRequired()
                 .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
             builder
                 .Property(i => i.SequenceUpperBound)
                 .IsRequired()
