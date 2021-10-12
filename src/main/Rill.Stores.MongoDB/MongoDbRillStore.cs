@@ -1,68 +1,37 @@
-﻿using System;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.IdGenerators;
 using MongoDB.Driver;
 
 namespace Rill.Stores.MongoDB
 {
-    public record MongoDbRillStoreOptions(string DbName);
-
-    internal class RillDocument
-    {
-        internal string Reference { get; }
-        internal string Name { get; }
-        internal long LastSequence { get; private set; }
-        internal DateTimeOffset CreatedAt { get; }
-        internal DateTimeOffset LastChangedAt { get; private set; }
-
-        private RillDocument(
-            string reference,
-            string name,
-            Guid id,
-            long lastSequence,
-            DateTimeOffset createdAt,
-            DateTimeOffset lastChangedAt)
-        {
-            Reference = reference;
-            Name = name;
-            LastSequence = lastSequence;
-            CreatedAt = createdAt;
-            LastChangedAt = lastChangedAt;
-        }
-
-        internal static void Configure()
-        {
-            BsonClassMap.RegisterClassMap<RillDocument>(schema =>
-            {
-                schema.AutoMap();
-                // schema
-                //     .MapIdMember(d => d.Id)
-                //     .SetIdGenerator(NullIdChecker.Instance);
-            });
-        }
-    }
-
-    internal class RillCommitDocument
-    {
-    }
-
     public class MongoDbRillStore : IRillStore
     {
         private readonly IMongoClient _client;
-        private readonly IMongoCollection<RillDocument> _rills;
-        private readonly IMongoCollection<RillCommitDocument> _commits;
+        private readonly MongoDbRillStoreOptions _options;
+        private readonly IMongoDatabase _database;
+        private readonly ConcurrentDictionary<string, IMongoCollection<RillDoc>> _rills = new();
+        private readonly ConcurrentDictionary<string, IMongoCollection<RillCommitDoc>> _commits = new();
+
+        static MongoDbRillStore()
+        {
+            RillDoc.ConfigureSchema();
+            RillCommitDoc.ConfigureSchema();
+        }
 
         public MongoDbRillStore(IMongoClient client, MongoDbRillStoreOptions options)
         {
             _client = client;
-
-            var database = client.GetDatabase(options.DbName);
-            _rills = database.GetCollection<RillDocument>("Rills");
-            _commits = database.GetCollection<RillCommitDocument>("RillCommits");
+            _options = options;
+            _database = client.GetDatabase(options.DbName);
         }
+
+        private IMongoCollection<RillDoc> GetRillsCollection(RillReference reference)
+            => _rills.GetOrAdd(reference.Name, n => _database.GetCollection<RillDoc>(_options.CollectionPerRill ? $"{n}-rills" : "rills"));
+
+        private IMongoCollection<RillCommitDoc> GetCommitsCollection(RillReference reference)
+            => _commits.GetOrAdd(reference.Name, n => _database.GetCollection<RillCommitDoc>(_options.CollectionPerRill ? $"{n}-commits" : "commits"));
 
         public Task<RillDetails?> GetDetailsAsync(RillReference reference, CancellationToken cancellationToken = default)
         {
