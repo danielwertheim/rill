@@ -10,8 +10,8 @@ There are two main tracks of an `Rill`: Asynchronous Rill (`IAsyncRill`) and Syn
 
 You create them via `RillFactory.Asynchronous()` and `RillFactory.Synchronous()`. The former uses consumers that has asynchronous members, while the later uses consumers with synchronous members.
 
-### `IRillCommit` & `IRillStore`
-A commit defines the result of a persisted sequential batch of events against an `IRillStore`. A Rill accepts **sequential** emits of events so the sequencing is used as an optimistic concurrency check.
+## `IRillCommit` & `IRillStore`
+A commit defines the result of a persisted sequential batch of events against an `IRillStore`. A Rill accepts **sequential** emits of events so the sequencing is used as an **optimistic concurrency check**.
 
 ```
 [Rill:Sequence]
@@ -220,9 +220,9 @@ namespace ConsoleSample.Views
 - Rill.Stores.EfCore
     - Support for all streams in one table setup ✔
     - Support for tables per stream 🤷‍♂️ (*most likely this will be in a relational store not using Entity Framework*)
-- Rill.Stores.MongoDB (*Coming soon!*)
-    - Support for all streams in one collection setup (*Coming soon!*)
-    - Support for collection per stream (*Coming soon!*)
+- Rill.Stores.MongoDB
+    - Support for all streams in one collection setup ✔
+    - Support for collection per stream ✔
 
 ### Rill.Stores.InMemory
 Simple in process storage for fiddling and testing.
@@ -243,6 +243,9 @@ var dbContextOptions = new DbContextOptionsBuilder<RillDbContext>()
 
 var rillStore = new EfCoreRillStore(dbContextOptions);
 ```
+
+### Rill.Stores.MongoDb
+**Provide information!!!**
 
 ## Development
 Run
