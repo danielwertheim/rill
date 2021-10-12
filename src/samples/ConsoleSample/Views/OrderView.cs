@@ -20,8 +20,15 @@ namespace ConsoleSample.Views
         {
             Reference = rill.Reference;
 
-            rill.Where<OrderPlaced>(ev => ev.Content.Amount > 1).Select(ev => ev.Content.Amount).Subscribe(amount => { });
-            rill.When<OrderPlaced>().Where(ev => ev.Content.Amount > 1).Select(ev => ev.Content.Amount).Subscribe(amount => { });
+            rill
+                .Where<OrderPlaced>(ev => ev.Content.Amount > 1)
+                .Select(ev => ev.Content.Amount)
+                .Subscribe(amount => { });
+            rill
+                .When<OrderPlaced>()
+                .Where(ev => ev.Content.Amount > 1)
+                .Select(ev => ev.Content.Amount)
+                .Subscribe(amount => { });
 
             rill.When<OrderPlaced>().Subscribe(ev =>
             {
