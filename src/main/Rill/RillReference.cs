@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace Rill
 {
@@ -19,16 +20,22 @@ namespace Rill
             Id = id;
         }
 
+        private static string EnsureValidName(string name)
+            => string.IsNullOrWhiteSpace(name)
+                ? throw new ArgumentException("A Name must be provided. An empty string is not allowed.", nameof(name))
+                : name.All(char.IsLetter)
+                    ? name
+                    : throw new ArgumentException("Name can only contain letters.", nameof(name));
+
+        private static string EnsureValidId(string id)
+            => string.IsNullOrWhiteSpace(id)
+                ? throw new ArgumentException("An Id must be provided. An empty string is not allowed.", nameof(id))
+                : id.All(char.IsLetterOrDigit)
+                    ? id
+                    : throw new ArgumentException("Id can only contain letters or digits.", nameof(id));
+
         public static RillReference From(string name, string id)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("A Name must be provided. An empty string is not allowed.", nameof(name));
-
-            if (string.IsNullOrWhiteSpace(id))
-                throw new ArgumentException("An Id must be provided. An empty string is not allowed.", nameof(id));
-
-            return new RillReference(name, id);
-        }
+            => new(EnsureValidName(name), EnsureValidId(id));
 
         public static RillReference From(string value)
         {

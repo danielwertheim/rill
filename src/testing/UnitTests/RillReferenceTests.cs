@@ -7,10 +7,33 @@ namespace UnitTests
 {
     public class RillReferenceTests
     {
+        [Theory]
+        [InlineData("1")]
+        [InlineData("!")]
+        [InlineData("a1")]
+        [InlineData("a!")]
+        public void Requires_name_to_be_letters_only(string nonLetterString)
+        {
+            FluentActions
+                .Invoking(() => RillReference.New(nonLetterString))
+                .Should().Throw<ArgumentException>()
+                .And.ParamName.Should().Be("name");
+        }
+
+        [Theory]
+        [InlineData("!")]
+        public void Requires_id_to_be_letters_or_numbers_only(string nonLetterString)
+        {
+            FluentActions
+                .Invoking(() => RillReference.From(Fake.Strings.RandomLettersUpperAndLowerCase(), nonLetterString))
+                .Should().Throw<ArgumentException>()
+                .And.ParamName.Should().Be("id");
+        }
+
         [Fact]
         public void Can_be_constructed()
         {
-            var name = Fake.Strings.Random();
+            var name = Fake.Strings.RandomLettersUpperAndLowerCase();
 
             var constructed = RillReference.New(name);
 
@@ -21,7 +44,7 @@ namespace UnitTests
         [Fact]
         public void Can_be_reconstructed()
         {
-            var org = RillReference.New(Fake.Strings.Random());
+            var org = RillReference.New(Fake.Strings.RandomLettersUpperAndLowerCase());
 
             var reconstructed = RillReference.From(org.Name, org.Id);
 
@@ -43,7 +66,7 @@ namespace UnitTests
                 .Should().Throw<ArgumentException>()
                 .And.ParamName.Should().Be("name");
             FluentActions
-                .Invoking(() => RillReference.From(Fake.Strings.Random(), string.Empty))
+                .Invoking(() => RillReference.From(Fake.Strings.RandomLettersUpperAndLowerCase(), string.Empty))
                 .Should().Throw<ArgumentException>()
                 .And.ParamName.Should().Be("id");
         }
@@ -61,7 +84,7 @@ namespace UnitTests
         [Fact]
         public void Can_be_handled_as_a_string()
         {
-            var org = RillReference.New(Fake.Strings.Random());
+            var org = RillReference.New(Fake.Strings.RandomLettersUpperAndLowerCase());
             var orgAsString = (string)org;
 
             orgAsString.Should().Be($"{org.Name}:{org.Id}");

@@ -16,7 +16,7 @@ namespace UnitTests.Rills
         [Fact]
         public async Task Returns_event_after_emitting()
         {
-            var content = Fake.Strings.Random();
+            var content = Fake.Strings.RandomAlphaNumericUpperAndLowerCase();
             var id = EventId.New();
             var seq = Sequence.First;
             var sut = NewSut();
@@ -65,7 +65,7 @@ namespace UnitTests.Rills
             sub1.Dispose();
             sub2.Dispose();
 
-            await sut.EmitAsync(Fake.Strings.Random());
+            await sut.EmitAsync(Fake.Strings.RandomAlphaNumericUpperAndLowerCase());
             unsubscribing.Ensure().ToBeUnTouched();
             unsubscribingDelegating.Ensure().ToBeUnTouched();
         }
@@ -96,8 +96,8 @@ namespace UnitTests.Rills
                 misbehavingDelegating.InOnAllSucceededAsync,
                 misbehavingDelegating.InOnAnyFailedAsync);
 
-            var ev1 = await sut.EmitAsync(Fake.Strings.Random());
-            var ev2 = await sut.EmitAsync(Fake.Strings.Random());
+            var ev1 = await sut.EmitAsync(Fake.Strings.RandomAlphaNumericUpperAndLowerCase());
+            var ev2 = await sut.EmitAsync(Fake.Strings.RandomAlphaNumericUpperAndLowerCase());
 
             behaving.Ensure().OnNewOnlyHas(ev1, ev2);
             behaving.Ensure().OnAllSucceededOnlyHasId(ev1.Id);
